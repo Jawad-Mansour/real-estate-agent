@@ -12,3 +12,10 @@ groq==0.9.0
 openai==1.51.0
 pytest==8.3.0
 pytest-asyncio==0.24.0
+cycler==0.12.1
+fonttools==4.62.1
+kiwisolver==1.5.0
+matplotlib==3.10.8
+pillow==12.2.0
+pyparsing==3.3.2
+seaborn==0.13.2
