@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# Logs
+logs/
+*.log
+
+# Models (large files - but we need model.joblib for deployment)
+# backend/models/*.joblib is needed - don't gitignore it
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data (raw data is large)
+data/raw/*.csv
+data/processed/*.csv
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Docker
+*.pid
