@@ -11,16 +11,16 @@ PDF #07: Stage 2 interpretation with training stats
 import logging
 from typing import Dict, Any, Optional
 
-from ..core.validation.pydantic_schemas import (
+from backend.core.validation.pydantic_schemas import (
     ExtractedFeatures,
     PredictResponse,
     Stage1Output
 )
-from ..core.validation.completeness_gate import CompletenessGate
-from ..core.ml.predictor import Predictor
-from ..core.ml.training_stats import TrainingStats
-from ..core.llm.stage1_extractor import Stage1Extractor
-from ..core.llm.stage2_interpreter import Stage2Interpreter
+from backend.core.validation.completeness_gate import CompletenessGate
+from backend.core.ml.predictor import Predictor
+from backend.core.ml.training_stats import TrainingStats
+from backend.core.llm.stage1_extractor import Stage1Extractor
+from backend.core.llm.stage2_interpreter import Stage2Interpreter
 
 logger = logging.getLogger(__name__)
 
