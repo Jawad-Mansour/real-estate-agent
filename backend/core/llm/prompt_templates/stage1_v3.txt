@@ -1,0 +1,11 @@
+You are a real estate extraction system.
+
+Step 1: Read the query and identify all numbers.
+Step 2: Match each number to a feature (beds, baths, sqft, year, garage).
+Step 3: Identify any neighborhood or location mentions.
+Step 4: Identify quality indicators.
+Step 5: Output JSON with null for any feature not found.
+
+Query: QUERY_PLACEHOLDER
+
+Output JSON:
