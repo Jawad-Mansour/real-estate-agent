@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HouseWise | Intelligent Property Valuation</title>
+    <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="assets/images/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1E3A5F',
+                        secondary: '#3B82F6',
+                        accent: '#8B5CF6',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        error: '#EF4444'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 font-['Inter']">
+
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="w-72 bg-white border-r border-gray-200 flex flex-col shadow-lg z-10">
+            <div class="p-6 border-b border-gray-100">
+                <div class="flex items-center gap-3">
+                    <img src="assets/images/favicon.ico" alt="HouseWise" class="w-8 h-8">
+                    <div>
+                        <h1 class="text-xl font-bold text-primary">HouseWise</h1>
+                        <p class="text-xs text-gray-400">Intelligent Valuation</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 p-4 space-y-2">
+                <button onclick="navigateTo('chat')" id="navChat" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 bg-primary text-white shadow-md">
+                    <i class="fas fa-comment-dots text-lg"></i>
+                    <span class="font-medium">AI Chat</span>
+                </button>
+                <button onclick="navigateTo('info')" id="navInfo" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-info-circle text-lg"></i>
+                    <span class="font-medium">System Info</span>
+                </button>
+                <button onclick="navigateTo('data')" id="navData" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-database text-lg"></i>
+                    <span class="font-medium">Training Data</span>
+                </button>
+                <button onclick="navigateTo('affects')" id="navAffects" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-100">
+                    <i class="fas fa-chart-line text-lg"></i>
+                    <span class="font-medium">What Affects Price?</span>
+                </button>
+                <button id="newChatBtn" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-100 mt-4 border-t border-gray-100 pt-4">
+                    <i class="fas fa-plus-circle text-lg text-success"></i>
+                    <span class="font-medium">New Chat</span>
+                </button>
+            </nav>
+
+            <div class="p-5 border-t border-gray-100">
+                <p class="text-xs text-gray-400 text-center">
+                    <i class="fas fa-shield-alt mr-1"></i>
+                    Powered by AI • 2,930+ transactions
+                </p>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 overflow-y-auto bg-gray-50">
+            
+            <!-- PAGE 1: AI CHAT -->
+            <div id="pageChat" class="page-content h-full flex flex-col">
+                <div class="bg-white border-b border-gray-100 px-6 py-4 sticky top-0 z-10">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-800">AI Assistant</h2>
+                            <p class="text-sm text-gray-400">Instant property valuation</p>
+                        </div>
+                        <div class="bg-secondary/10 rounded-full px-3 py-1">
+                            <i class="fas fa-robot text-secondary text-xs mr-1"></i>
+                            <span class="text-xs text-secondary">Online</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Centered Icon (visible when no messages) -->
+                <div id="centeredIcon" class="flex-1 flex flex-col items-center justify-center">
+                    <div class="relative">
+                        <div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-secondary via-accent to-secondary blur-xl opacity-70 animate-pulse-slow"></div>
+                        <div class="relative w-24 h-24 flex items-center justify-center animate-float">
+                            <img src="assets/images/favicon.ico" alt="HouseWise" class="w-20 h-20">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scrollable Chat Messages (hidden initially) -->
+                <div id="chatMessages" class="hidden flex-1 overflow-y-auto p-6 space-y-4"></div>
+
+                <!-- Input Area -->
+                <div class="bg-white border-t border-gray-100 p-4">
+                    <div class="flex gap-3 items-start">
+                        <textarea id="queryInput" rows="1"
+                            class="flex-1 border border-gray-200 rounded-2xl p-3 focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 resize-none text-gray-700 placeholder-gray-400 text-sm"
+                            style="min-height: 48px; max-height: 120px;"
+                            placeholder="Describe the property..."></textarea>
+                        <button id="sendBtn" 
+                            class="bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white w-12 h-12 rounded-2xl transition-all duration-300 shadow-md flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-paper-plane text-lg"></i>
+                        </button>
+                    </div>
+                    <div class="text-center mt-2">
+                        <p class="text-xs text-gray-400">Press Ctrl + Enter to send</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 2: SYSTEM INFO -->
+            <div id="pageInfo" class="page-content hidden p-8">
+                <div class="max-w-4xl mx-auto">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="bg-primary/10 rounded-xl p-3"><i class="fas fa-info-circle text-primary text-2xl"></i></div>
+                            <div><h2 class="text-2xl font-bold text-gray-800">About HouseWise</h2><p class="text-gray-500">Intelligent Property Valuation System</p></div>
+                        </div>
+                        <div class="space-y-6">
+                            <div><h3 class="text-lg font-semibold text-gray-800 mb-2">How It Works</h3><p class="text-gray-600 leading-relaxed">HouseWise uses a two-stage LLM prompt chain combined with a trained machine learning model. First, it extracts property features from your natural language description. Then, a Random Forest model (trained on 2,930 real Ames housing transactions) predicts the market value. Finally, an AI explains the price in plain English.</p></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-gray-50 rounded-xl p-4"><div class="flex items-center gap-2 mb-2"><i class="fas fa-brain text-secondary"></i><h4 class="font-semibold text-gray-800">Stage 1: Extraction</h4></div><p class="text-sm text-gray-600">LLM extracts 12 property features from your description. Never guesses - only uses what you mention.</p></div>
+                                <div class="bg-gray-50 rounded-xl p-4"><div class="flex items-center gap-2 mb-2"><i class="fas fa-chart-line text-success"></i><h4 class="font-semibold text-gray-800">Stage 2: Prediction</h4></div><p class="text-sm text-gray-600">Random Forest model predicts price based on extracted features and training data.</p></div>
+                                <div class="bg-gray-50 rounded-xl p-4"><div class="flex items-center gap-2 mb-2"><i class="fas fa-comment-dots text-warning"></i><h4 class="font-semibold text-gray-800">Stage 3: Explanation</h4></div><p class="text-sm text-gray-600">AI explains why the price is high or low, with key factors driving value.</p></div>
+                                <div class="bg-gray-50 rounded-xl p-4"><div class="flex items-center gap-2 mb-2"><i class="fas fa-check-circle text-success"></i><h4 class="font-semibold text-gray-800">Completeness Gate</h4></div><p class="text-sm text-gray-600">Never predicts with missing data - asks for missing details first.</p></div>
+                            </div>
+                            <div class="bg-primary/5 rounded-xl p-4"><h4 class="font-semibold text-gray-800 mb-2">📊 Model Performance</h4><div class="grid grid-cols-2 gap-4 text-sm"><div><span class="text-gray-500">Test R²:</span> <span class="font-medium">0.8547</span></div><div><span class="text-gray-500">Test RMSE:</span> <span class="font-medium">$32,361</span></div><div><span class="text-gray-500">Best Model:</span> <span class="font-medium">Random Forest</span></div><div><span class="text-gray-500">Features:</span> <span class="font-medium">12</span></div></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 3: TRAINING DATA -->
+            <div id="pageData" class="page-content hidden p-8">
+                <div class="max-w-4xl mx-auto">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+                        <div class="flex items-center gap-3 mb-6"><div class="bg-success/10 rounded-xl p-3"><i class="fas fa-database text-success text-2xl"></i></div><div><h2 class="text-2xl font-bold text-gray-800">Training Data</h2><p class="text-gray-500">Ames Housing Dataset</p></div></div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><div class="bg-gray-50 rounded-xl p-4 text-center"><div class="text-2xl font-bold text-primary">2,930</div><div class="text-xs text-gray-500">Properties</div></div><div class="bg-gray-50 rounded-xl p-4 text-center"><div class="text-2xl font-bold text-primary">82</div><div class="text-xs text-gray-500">Features per property</div></div><div class="bg-gray-50 rounded-xl p-4 text-center"><div class="text-2xl font-bold text-primary">2006-2010</div><div class="text-xs text-gray-500">Sales period</div></div></div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">Selected Features (12)</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-6">
+                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">🛏️ Bedrooms</span>
+                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">🚿 Bathrooms</span>
+                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">📐 Living Area</span>
+                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">📏 Lot Area</span>
+                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">📅 Year Built</span>
+                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">🚗 Garage</span>
+                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">🔧 Condition</span>
+                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">⭐ Quality</span>
+                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">🏘️ Neighborhood</span>
+                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">🏠 Basement</span>
+                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">🔥 Heating</span>
+                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">❄️ Central Air</span>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-4"><h4 class="font-semibold text-gray-800 mb-2">📈 Price Distribution (Training)</h4><div class="space-y-2 text-sm"><div class="flex justify-between"><span class="text-gray-500">Median Price:</span><span class="font-medium">$160,000</span></div><div class="flex justify-between"><span class="text-gray-500">Mean Price:</span><span class="font-medium">$178,641</span></div><div class="flex justify-between"><span class="text-gray-500">Price Range:</span><span class="font-medium">$12,789 - $755,000</span></div><div class="flex justify-between"><span class="text-gray-500">Typical Range (Q1-Q3):</span><span class="font-medium">$129,500 - $210,500</span></div></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 4: WHAT AFFECTS PRICE -->
+            <div id="pageAffects" class="page-content hidden p-8">
+                <div class="max-w-4xl mx-auto">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+                        <div class="flex items-center gap-3 mb-6"><div class="bg-warning/10 rounded-xl p-3"><i class="fas fa-chart-line text-warning text-2xl"></i></div><div><h2 class="text-2xl font-bold text-gray-800">What Affects Price?</h2><p class="text-gray-500">Feature importance from our Random Forest model</p></div></div>
+                        <div class="space-y-4 mb-8">
+                            <div><div class="flex justify-between text-sm mb-1"><span class="font-medium">🏠 Overall Quality</span><span class="text-primary font-bold">63%</span></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r from-primary to-secondary h-2 rounded-full" style="width: 63%"></div></div><p class="text-xs text-gray-500 mt-1">The single most important factor. Quality 7+ adds 30%+ value.</p></div>
+                            <div><div class="flex justify-between text-sm mb-1"><span class="font-medium">📐 Living Area</span><span class="text-primary font-bold">15%</span></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r from-primary to-secondary h-2 rounded-full" style="width: 15%"></div></div><p class="text-xs text-gray-500 mt-1">Each 100 sq ft adds approximately $5,000-$10,000.</p></div>
+                            <div><div class="flex justify-between text-sm mb-1"><span class="font-medium">🚗 Garage</span><span class="text-primary font-bold">6%</span></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r from-primary to-secondary h-2 rounded-full" style="width: 6%"></div></div><p class="text-xs text-gray-500 mt-1">2-car garage adds $15,000-$25,000 compared to no garage.</p></div>
+                            <div><div class="flex justify-between text-sm mb-1"><span class="font-medium">🛏️ Bedrooms</span><span class="text-primary font-bold">4%</span></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r from-primary to-secondary h-2 rounded-full" style="width: 4%"></div></div><p class="text-xs text-gray-500 mt-1">Each additional bedroom adds ~$15,000-$25,000.</p></div>
+                        </div>
+                        <div class="bg-primary/5 rounded-xl p-4"><h4 class="font-semibold text-gray-800 mb-2">💡 Key Insights</h4><ul class="space-y-2 text-sm text-gray-600"><li class="flex items-start gap-2"><i class="fas fa-check-circle text-success text-sm mt-0.5"></i> Quality > 7 puts you in the top 25% of homes</li><li class="flex items-start gap-2"><i class="fas fa-check-circle text-success text-sm mt-0.5"></i> Finished basement adds 10-15% to value</li><li class="flex items-start gap-2"><i class="fas fa-check-circle text-success text-sm mt-0.5"></i> StoneBr, NoRidge, NridgHt are premium neighborhoods</li><li class="flex items-start gap-2"><i class="fas fa-check-circle text-success text-sm mt-0.5"></i> Central air conditioning adds ~5% to value</li><li class="flex items-start gap-2"><i class="fas fa-check-circle text-success text-sm mt-0.5"></i> Newer homes (post-2000) command 20-30% premium</li></ul></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
