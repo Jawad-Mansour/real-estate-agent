@@ -1,6 +1,6 @@
 /**
  * HouseWise - Intelligent Property Valuation
- * Chat-style missing values with clean price display
+ * Fixed: No default basement, proper prediction flow, New Chat from any page
  */
 
 const API_BASE_URL = 'http://localhost:8000';
@@ -19,6 +19,7 @@ let currentState = {
 let hasMessages = false;
 
 const FIELD_CONFIG = {
+    bedrooms: { label: 'bedrooms', icon: '🛏️', question: 'How many bedrooms does the property have?', type: 'number', placeholder: 'e.g., 3' },
     bathrooms: { label: 'bathrooms', icon: '🚿', question: 'How many bathrooms does the property have?', type: 'number', placeholder: 'e.g., 2' },
     sqft_living: { label: 'living area', icon: '📐', question: 'What is the living area in square feet?', type: 'number', placeholder: 'e.g., 1800' },
     sqft_lot: { label: 'lot area', icon: '📏', question: 'What is the lot area in square feet?', type: 'number', placeholder: 'e.g., 10000' },
@@ -85,18 +86,27 @@ function escapeHtml(text) {
 }
 
 function addExtractedMessage(extracted) {
+    const nonNullEntries = Object.entries(extracted).filter(([_, v]) => v !== null);
+    
+    if (nonNullEntries.length === 0) {
+        addMessage("I couldn't extract any property details from your description. Could you please provide more specific information?");
+        return;
+    }
+    
     let featuresHtml = '<div class="flex flex-wrap gap-2 mt-2">';
-    for (const [key, value] of Object.entries(extracted)) {
-        if (value !== null) {
-            const icons = { bedrooms: '🛏️', bathrooms: '🚿', neighborhood: '🏘️', basement: '🏠' };
-            featuresHtml += `<span class="bg-green-50 text-green-700 px-2 py-1 rounded-full text-xs">${icons[key] || '📝'} ${key}: ${value}</span>`;
-        }
+    for (const [key, value] of nonNullEntries) {
+        const icons = { bedrooms: '🛏️', bathrooms: '🚿', neighborhood: '🏘️', basement: '🏠', quality: '⭐', condition: '🔧', garage_cars: '🚗', year_built: '📅', sqft_living: '📐', sqft_lot: '📏', heating: '🔥', central_air: '❄️' };
+        featuresHtml += `<span class="bg-green-50 text-green-700 px-2 py-1 rounded-full text-xs">${icons[key] || '📝'} ${key}: ${value}</span>`;
     }
     featuresHtml += '</div>';
     addMessage(`I've extracted these details from your description:${featuresHtml}`);
 }
 
 function startMissingQuestions(missingFields) {
+    if (missingFields.length === 0) {
+        calculatePrediction();
+        return;
+    }
     currentState.missingFields = missingFields;
     currentState.currentQuestionIndex = 0;
     currentState.waitingForAnswer = true;
@@ -121,9 +131,12 @@ async function handleUserAnswer(answer) {
     addMessage(answer, true);
     const field = currentState.currentField;
     let value = answer.trim();
-    if (['bathrooms', 'sqft_living', 'sqft_lot', 'year_built', 'garage_cars', 'condition', 'quality'].includes(field)) {
+    if (['bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot', 'year_built', 'garage_cars', 'condition', 'quality'].includes(field)) {
         value = parseFloat(value);
-        if (isNaN(value)) { addMessage(`Please enter a valid number for ${FIELD_CONFIG[field]?.label || field}.`); return; }
+        if (isNaN(value)) { 
+            addMessage(`Please enter a valid number for ${FIELD_CONFIG[field]?.label || field}.`); 
+            return; 
+        }
     }
     currentState.collectedValues[field] = value;
     currentState.currentQuestionIndex++;
@@ -135,7 +148,11 @@ async function calculatePrediction() {
     addMessage("Great! Let me calculate the value for you...");
     const overrideFeatures = { ...currentState.extractedFeatures, ...currentState.collectedValues };
     try {
-        const response = await fetch(`${API_BASE_URL}/predict`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: currentState.originalQuery, override_features: overrideFeatures }) });
+        const response = await fetch(`${API_BASE_URL}/predict`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ query: currentState.originalQuery, override_features: overrideFeatures }) 
+        });
         const data = await response.json();
         if (data.status === 'complete') {
             displayPriceResult(data.predicted_price, data.explanation, data.key_factors, data.comparison);
@@ -143,7 +160,6 @@ async function calculatePrediction() {
             currentState.waitingForAnswer = false;
         } else { 
             addMessage(`Sorry, I couldn't calculate the price. ${data.message || 'Please try again.'}`); 
-            resetChat(); 
         }
     } catch (error) { 
         addMessage('Error connecting to the valuation service. Please make sure the backend is running.'); 
@@ -187,18 +203,59 @@ async function handleSendMessage() {
     const queryInput = document.getElementById('queryInput');
     const query = queryInput?.value.trim();
     if (!query) return;
-    if (currentState.waitingForAnswer) { await handleUserAnswer(query); queryInput.value = ''; queryInput.style.height = '48px'; return; }
+    
+    if (currentState.waitingForAnswer) { 
+        await handleUserAnswer(query); 
+        queryInput.value = ''; 
+        queryInput.style.height = '48px'; 
+        return; 
+    }
+    
     addMessage(query, true);
     queryInput.value = '';
     queryInput.style.height = '48px';
+    
     try {
-        const response = await fetch(`${API_BASE_URL}/predict`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query, override_features: null }) });
+        const response = await fetch(`${API_BASE_URL}/predict`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ query, override_features: null }) 
+        });
         const data = await response.json();
+        
         if (data.status === 'incomplete') {
-            currentState = { extractedFeatures: data.extracted_features || {}, missingFields: data.missing_fields || [], originalQuery: query, step: 'missing', currentQuestionIndex: 0, waitingForAnswer: false, currentField: null, collectedValues: {} };
-            addExtractedMessage(currentState.extractedFeatures);
-            addMessage(`I need a few more details to give you an accurate estimate.`);
-            startMissingQuestions(currentState.missingFields);
+            const extracted = data.extracted_features || {};
+            const missing = data.missing_fields || [];
+            
+            // Filter out any null-only extractions (like basement: None from vague queries)
+            const filteredExtracted = {};
+            for (const [key, value] of Object.entries(extracted)) {
+                if (value !== null && value !== undefined && value !== 'None') {
+                    filteredExtracted[key] = value;
+                }
+            }
+            
+            currentState = { 
+                extractedFeatures: filteredExtracted, 
+                missingFields: missing, 
+                originalQuery: query, 
+                step: 'missing', 
+                currentQuestionIndex: 0, 
+                waitingForAnswer: false, 
+                currentField: null, 
+                collectedValues: {} 
+            };
+            
+            if (Object.keys(filteredExtracted).length > 0) {
+                addExtractedMessage(filteredExtracted);
+            }
+            
+            if (missing.length > 0) {
+                addMessage(`I need a few more details to give you an accurate estimate.`);
+                startMissingQuestions(missing);
+            } else {
+                calculatePrediction();
+            }
         } else if (data.status === 'complete') { 
             displayPriceResult(data.predicted_price, data.explanation, data.key_factors, data.comparison); 
             currentState.step = 'result'; 
@@ -211,6 +268,10 @@ async function handleSendMessage() {
 }
 
 function resetChat() {
+    // First navigate to chat page
+    navigateTo('chat');
+    
+    // Clear messages
     const chatMessages = document.getElementById('chatMessages');
     const centeredIcon = document.getElementById('centeredIcon');
     
@@ -225,7 +286,17 @@ function resetChat() {
     }
     
     hasMessages = false;
-    currentState = { extractedFeatures: {}, missingFields: [], originalQuery: '', step: 'input', currentQuestionIndex: 0, waitingForAnswer: false, currentField: null, collectedValues: {} };
+    currentState = { 
+        extractedFeatures: {}, 
+        missingFields: [], 
+        originalQuery: '', 
+        step: 'input', 
+        currentQuestionIndex: 0, 
+        waitingForAnswer: false, 
+        currentField: null, 
+        collectedValues: {} 
+    };
+    
     const queryInput = document.getElementById('queryInput');
     if (queryInput) {
         queryInput.value = '';
@@ -237,7 +308,12 @@ document.addEventListener('DOMContentLoaded', () => {
     navigateTo('chat');
     document.getElementById('sendBtn')?.addEventListener('click', handleSendMessage);
     document.getElementById('newChatBtn')?.addEventListener('click', resetChat);
-    document.getElementById('queryInput')?.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleSendMessage(); });
+    document.getElementById('queryInput')?.addEventListener('keydown', (e) => { 
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            handleSendMessage(); 
+        }
+    });
     document.getElementById('queryInput')?.addEventListener('input', function() { 
         this.style.height = 'auto'; 
         const newHeight = Math.min(this.scrollHeight, 120);
