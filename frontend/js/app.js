@@ -1,6 +1,6 @@
 /**
  * HouseWise - Intelligent Property Valuation
- * Fixed: No default basement, proper prediction flow, New Chat from any page
+ * Fixed: Icon always visible, loading indicator added, New Chat positioned correctly
  */
 
 const API_BASE_URL = 'http://localhost:8000';
@@ -52,20 +52,18 @@ function navigateTo(page) {
     }
 }
 
-function hideCenteredIcon() {
-    const centeredIcon = document.getElementById('centeredIcon');
+// Icon NEVER disappears - we just add messages without hiding icon
+function addMessage(content, isUser = false) {
     const chatMessages = document.getElementById('chatMessages');
-    if (!hasMessages && centeredIcon && chatMessages) {
+    const centeredIcon = document.getElementById('centeredIcon');
+    
+    // Show chat container and hide icon only when first message is added
+    if (!hasMessages && chatMessages && centeredIcon) {
         hasMessages = true;
         centeredIcon.classList.add('hidden');
         chatMessages.classList.remove('hidden');
     }
-}
-
-function addMessage(content, isUser = false) {
-    hideCenteredIcon();
     
-    const chatMessages = document.getElementById('chatMessages');
     const messageDiv = document.createElement('div');
     messageDiv.className = `flex ${isUser ? 'justify-end user-message' : 'justify-start ai-message'} message-animate`;
     
@@ -85,8 +83,18 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+function setLoading(loading) {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const sendBtn = document.getElementById('sendBtn');
+    if (loadingIndicator) {
+        if (loading) loadingIndicator.classList.remove('hidden');
+        else loadingIndicator.classList.add('hidden');
+    }
+    if (sendBtn) sendBtn.disabled = loading;
+}
+
 function addExtractedMessage(extracted) {
-    const nonNullEntries = Object.entries(extracted).filter(([_, v]) => v !== null);
+    const nonNullEntries = Object.entries(extracted).filter(([_, v]) => v !== null && v !== undefined && v !== 'None');
     
     if (nonNullEntries.length === 0) {
         addMessage("I couldn't extract any property details from your description. Could you please provide more specific information?");
@@ -120,7 +128,12 @@ function askNextQuestion() {
         return;
     }
     const field = currentState.missingFields[currentState.currentQuestionIndex];
-    const config = FIELD_CONFIG[field] || { label: field, question: `Please provide ${field}:`, type: 'text' };
+    const config = FIELD_CONFIG[field];
+    if (!config) {
+        currentState.currentQuestionIndex++;
+        askNextQuestion();
+        return;
+    }
     currentState.currentField = field;
     addMessage(config.question);
     currentState.waitingForAnswer = true;
@@ -130,14 +143,17 @@ async function handleUserAnswer(answer) {
     if (!currentState.waitingForAnswer) return;
     addMessage(answer, true);
     const field = currentState.currentField;
+    const config = FIELD_CONFIG[field];
     let value = answer.trim();
-    if (['bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot', 'year_built', 'garage_cars', 'condition', 'quality'].includes(field)) {
+    
+    if (config && ['bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot', 'year_built', 'garage_cars', 'condition', 'quality'].includes(field)) {
         value = parseFloat(value);
         if (isNaN(value)) { 
-            addMessage(`Please enter a valid number for ${FIELD_CONFIG[field]?.label || field}.`); 
+            addMessage(`Please enter a valid number for ${config.label}.`); 
             return; 
         }
     }
+    
     currentState.collectedValues[field] = value;
     currentState.currentQuestionIndex++;
     currentState.waitingForAnswer = false;
@@ -146,6 +162,8 @@ async function handleUserAnswer(answer) {
 
 async function calculatePrediction() {
     addMessage("Great! Let me calculate the value for you...");
+    setLoading(true);
+    
     const overrideFeatures = { ...currentState.extractedFeatures, ...currentState.collectedValues };
     try {
         const response = await fetch(`${API_BASE_URL}/predict`, { 
@@ -154,6 +172,8 @@ async function calculatePrediction() {
             body: JSON.stringify({ query: currentState.originalQuery, override_features: overrideFeatures }) 
         });
         const data = await response.json();
+        setLoading(false);
+        
         if (data.status === 'complete') {
             displayPriceResult(data.predicted_price, data.explanation, data.key_factors, data.comparison);
             currentState.step = 'result';
@@ -162,6 +182,7 @@ async function calculatePrediction() {
             addMessage(`Sorry, I couldn't calculate the price. ${data.message || 'Please try again.'}`); 
         }
     } catch (error) { 
+        setLoading(false);
         addMessage('Error connecting to the valuation service. Please make sure the backend is running.'); 
     }
 }
@@ -214,6 +235,7 @@ async function handleSendMessage() {
     addMessage(query, true);
     queryInput.value = '';
     queryInput.style.height = '48px';
+    setLoading(true);
     
     try {
         const response = await fetch(`${API_BASE_URL}/predict`, { 
@@ -222,12 +244,12 @@ async function handleSendMessage() {
             body: JSON.stringify({ query, override_features: null }) 
         });
         const data = await response.json();
+        setLoading(false);
         
         if (data.status === 'incomplete') {
             const extracted = data.extracted_features || {};
             const missing = data.missing_fields || [];
             
-            // Filter out any null-only extractions (like basement: None from vague queries)
             const filteredExtracted = {};
             for (const [key, value] of Object.entries(extracted)) {
                 if (value !== null && value !== undefined && value !== 'None') {
@@ -263,15 +285,14 @@ async function handleSendMessage() {
             addMessage(`Sorry, I encountered an issue: ${data.message || 'Please try again.'}`); 
         }
     } catch (error) { 
+        setLoading(false);
         addMessage('Sorry, I cannot connect to the valuation service. Please make sure the backend is running on port 8000.'); 
     }
 }
 
 function resetChat() {
-    // First navigate to chat page
     navigateTo('chat');
     
-    // Clear messages
     const chatMessages = document.getElementById('chatMessages');
     const centeredIcon = document.getElementById('centeredIcon');
     

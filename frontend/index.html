@@ -48,21 +48,26 @@
                     <i class="fas fa-comment-dots text-lg"></i>
                     <span class="font-medium">AI Chat</span>
                 </button>
+                
+                <!-- New Chat button directly under AI Chat -->
+                <button id="newChatBtn" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-white bg-success hover:bg-green-700 shadow-md mb-6">
+                    <i class="fas fa-plus-circle text-lg"></i>
+                    <span class="font-medium">New Chat</span>
+                </button>
+                
                 <button onclick="navigateTo('info')" id="navInfo" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-100">
                     <i class="fas fa-info-circle text-lg"></i>
                     <span class="font-medium">System Info</span>
                 </button>
+                
                 <button onclick="navigateTo('data')" id="navData" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-100">
                     <i class="fas fa-database text-lg"></i>
                     <span class="font-medium">Training Data</span>
                 </button>
+                
                 <button onclick="navigateTo('affects')" id="navAffects" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-100">
                     <i class="fas fa-chart-line text-lg"></i>
                     <span class="font-medium">What Affects Price?</span>
-                </button>
-                <button id="newChatBtn" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-100 mt-4 border-t border-gray-100 pt-4">
-                    <i class="fas fa-plus-circle text-lg text-success"></i>
-                    <span class="font-medium">New Chat</span>
                 </button>
             </nav>
 
@@ -92,18 +97,26 @@
                     </div>
                 </div>
 
-                <!-- Centered Icon (visible when no messages) -->
+                <!-- Centered Icon (always visible, decreased brightness) -->
                 <div id="centeredIcon" class="flex-1 flex flex-col items-center justify-center">
                     <div class="relative">
-                        <div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-secondary via-accent to-secondary blur-xl opacity-70 animate-pulse-slow"></div>
+                        <div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-secondary via-accent to-secondary blur-xl opacity-30 animate-pulse-slow"></div>
                         <div class="relative w-24 h-24 flex items-center justify-center animate-float">
                             <img src="assets/images/favicon.ico" alt="HouseWise" class="w-20 h-20">
                         </div>
                     </div>
                 </div>
 
-                <!-- Scrollable Chat Messages (hidden initially) -->
+                <!-- Scrollable Chat Messages (hidden initially, appears when messages added) -->
                 <div id="chatMessages" class="hidden flex-1 overflow-y-auto p-6 space-y-4"></div>
+
+                <!-- Loading Indicator -->
+                <div id="loadingIndicator" class="hidden py-2 text-center">
+                    <div class="inline-flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-sm">
+                        <div class="animate-spin rounded-full h-4 w-4 border-2 border-secondary border-t-transparent"></div>
+                        <span class="text-xs text-gray-500">AI is thinking...</span>
+                    </div>
+                </div>
 
                 <!-- Input Area -->
                 <div class="bg-white border-t border-gray-100 p-4">
