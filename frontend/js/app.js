@@ -212,11 +212,18 @@ function addExtractedMessage(extracted) {
     addMessage(`I've extracted these details from your description:${featuresHtml}`);
 }
 
-function startMissingQuestions(missingFields, resetCollected = true) {
+function startMissingQuestions(missingFields, resetCollected = true, showIntroMessage = true) {
     if (!missingFields || missingFields.length === 0) {
         calculatePrediction();
         return;
     }
+    
+    if (showIntroMessage) {
+        const totalQuestions = missingFields.length;
+        const progressText = totalQuestions === 1 ? "one more detail" : `${totalQuestions} more details`;
+        addMessage(`I need ${progressText} to give you an accurate estimate. Let's go through them one by one:`);
+    }
+    
     currentState.missingFields = missingFields;
     currentState.currentQuestionIndex = 0;
     currentState.waitingForAnswer = true;
@@ -239,8 +246,13 @@ function askNextQuestion() {
         askNextQuestion();
         return;
     }
+    
+    const currentNum = currentState.currentQuestionIndex + 1;
+    const total = currentState.missingFields.length;
+    const progressIndicator = total > 1 ? ` (${currentNum}/${total})` : '';
+    
     currentState.currentField = field;
-    addMessage(config.question);
+    addMessage(`${config.icon} ${config.question}${progressIndicator}`);
     currentState.waitingForAnswer = true;
 }
 
@@ -262,7 +274,7 @@ async function handleUserAnswer(answer) {
         if (field === 'garage_cars') {
             value = parseGarageAnswer(value);
             if (isNaN(value)) {
-                addMessage(`Please enter a valid number for garage capacity (0-5).`);
+                addMessage(`❌ Please enter a valid number for garage capacity (0-5).`);
                 return;
             }
         } else if (['bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot', 'year_built', 'condition', 'quality'].includes(field)) {
@@ -273,7 +285,7 @@ async function handleUserAnswer(answer) {
                 value = parseFloat(value);
             }
             if (isNaN(value)) {
-                addMessage(`Please enter a valid number for ${config.label}.`);
+                addMessage(`❌ Please enter a valid number for ${config.label}.`);
                 return;
             }
         }
@@ -314,7 +326,7 @@ async function calculatePrediction() {
         return;
     }
 
-    addMessage("Great! Let me calculate the value for you...");
+    addMessage("✨ Perfect! I have all the information I need. Let me calculate your property's value...");
     setLoading(true);
     
     try {
@@ -337,7 +349,7 @@ async function calculatePrediction() {
 
             const filteredExtracted = {};
             for (const [key, value] of Object.entries(extracted)) {
-                if (value !== null && value !== undefined && value !== 'None') {
+                if (value !== null && value !== undefined) {
                     filteredExtracted[key] = value;
                 }
             }
@@ -349,14 +361,14 @@ async function calculatePrediction() {
             currentState.waitingForAnswer = false;
             currentState.currentField = null;
 
-            addMessage(`Still missing ${missing.length} feature(s): ${missing.join(', ')}. Please provide them.`);
-            startMissingQuestions(missing, false);
+            addMessage(`I still need ${missing.length} more detail(s): ${missing.join(', ')}. Let's continue:`);
+            startMissingQuestions(missing, false, false); // Don't show intro message again
         } else {
-            addMessage(`Sorry, I couldn't calculate the price. ${data.message || 'Please try again.'}`); 
+            addMessage(`❌ Sorry, I couldn't calculate the price. ${data.message || 'Please try again.'}`); 
         }
     } catch (error) { 
         setLoading(false);
-        addMessage('Error connecting to the valuation service. Please make sure the backend is running.'); 
+        addMessage('❌ Error connecting to the valuation service. Please make sure the backend is running.'); 
     }
 }
 
@@ -438,7 +450,7 @@ async function handleSendMessage() {
             
             const filteredExtracted = {};
             for (const [key, value] of Object.entries(extracted)) {
-                if (value !== null && value !== undefined && value !== 'None') {
+                if (value !== null && value !== undefined) {
                     filteredExtracted[key] = value;
                 }
             }
@@ -459,8 +471,10 @@ async function handleSendMessage() {
             }
             
             if (missing.length > 0) {
-                addMessage(`I need a few more details to give you an accurate estimate.`);
-                startMissingQuestions(missing);
+                const totalQuestions = missing.length;
+                const progressText = totalQuestions === 1 ? "one more detail" : `${totalQuestions} more details`;
+                addMessage(`I need ${progressText} to give you an accurate estimate. Let's go through them one by one:`);
+                startMissingQuestions(missing, true, false); // Don't show intro message again
             } else {
                 calculatePrediction();
             }
