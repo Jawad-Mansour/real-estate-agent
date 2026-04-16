@@ -12,3 +12,5 @@ groq==0.9.0
 openai==1.51.0
 pytest==8.3.0
 pytest-asyncio==0.24.0
+matplotlib==3.10.8
+seaborn==0.13.2
