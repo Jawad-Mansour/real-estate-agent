@@ -18,14 +18,18 @@ class PromptVersioning:
         "3-bedroom ranch with big garage in a good neighborhood",
         "Luxury 4-bed, 3.5-bath colonial in Northwood, 2500 sqft, built 2015",
         "Small 2-bed cottage near downtown, needs work",
-        "Spacious family home with finished basement and central air"
+        "Spacious family home with finished basement and central air",
+        "2 bedroom 1 bathroom small house with 900 sqft",
+        "cozy 2 bed 1 bath cottage around 1000 square feet",
+        "4 bed 3 bath colonial with 2 car garage",
+        "small house needs work"
     ]
     
     @classmethod
     def run_comparison(cls) -> Dict[str, Any]:
         results = {}
         
-        for version in ['v1', 'v2', 'v3']:
+        for version in ['v1', 'v2', 'v3', 'v4']:
             version_results = []
             for query in cls.TEST_QUERIES:
                 output = Stage1Extractor.extract_with_version(query, version)
@@ -61,7 +65,7 @@ class PromptVersioning:
     def _determine_winner(cls, results: Dict) -> str:
         best_version = None
         best_score = -1
-        priority = {'v2': 0, 'v1': 1, 'v3': 2}
+        priority = {'v4': 0, 'v2': 1, 'v1': 2, 'v3': 3}  # V4 gets highest priority
 
         for version, data in results.items():
             score = data['metrics']['avg_completeness']
