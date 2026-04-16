@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+docs/
+README.md
+ARCHITECTURE.md
+DEPLOYMENT.md
+PROMPT_ENGINEERING.md
+
+# Notebooks
+notebooks/
+*.ipynb
+
+# Data (exclude raw data, keep model)
+data/raw/*.csv
+data/processed/*.csv
+
+# OS
+.DS_Store
+Thumbs.db
