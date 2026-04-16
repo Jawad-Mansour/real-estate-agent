@@ -40,9 +40,9 @@ class PredictionService:
     
     def __init__(self):
         """Initialize all components"""
-        self.stage1_extractor = Stage1Extractor(prompt_version='v2')
+        self.stage1_extractor = Stage1Extractor(prompt_version='v4')
         self.stage2_interpreter = Stage2Interpreter()
-        logger.info("PredictionService initialized with Stage1(v2) and Stage2")
+        logger.info("PredictionService initialized with Stage1(v4) and Stage2")
     
     def process_query(
         self, 

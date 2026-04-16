@@ -22,7 +22,8 @@ class Stage1Extractor:
     PROMPT_VERSIONS = {
         'v1': 'stage1_v1.txt',
         'v2': 'stage1_v2.txt',
-        'v3': 'stage1_v3.txt'
+        'v3': 'stage1_v3.txt',
+        'v4': 'stage1_v4.txt'
     }
     
     def __init__(self, prompt_version: str = 'v2'):
@@ -52,6 +53,7 @@ class Stage1Extractor:
             return Stage1Output.from_extracted(empty_features)
         
         features_dict = self._parse_json_response(response)
+        features_dict = self._enhance_extracted_features(features_dict, query)
         features_dict = self._clean_extracted_features(features_dict)
         
         try:
@@ -135,6 +137,231 @@ class Stage1Extractor:
 
         return extracted
 
+    def _enhance_extracted_features(self, extracted: Dict[str, Any], query: str) -> Dict[str, Any]:
+        """
+        Post-process extracted features with additional pattern matching.
+        This provides a fallback when the LLM misses obvious patterns.
+        """
+        if not extracted:
+            extracted = {}
+        
+        query_lower = query.lower()
+        
+        # Enhanced condition and quality mapping
+        condition_quality_mappings = {
+            'needs work': (3, 3),
+            'fixer upper': (3, 3),
+            'needs repairs': (3, 3),
+            'run down': (2, 2),
+            'poor condition': (2, 2),
+            'average': (5, 5),
+            'typical': (5, 5),
+            'good condition': (7, 6),
+            'well maintained': (7, 6),
+            'excellent condition': (9, 8),
+            'like new': (9, 8),
+            'perfect': (9, 8),
+            'luxury': (9, 9),
+            'high-end': (9, 9),
+            'premium': (9, 9),
+            'upscale': (9, 9),
+            'great neighborhood': (7, 7),
+            'nice area': (7, 7),
+            'desirable location': (7, 7)
+        }
+        
+        # Apply condition/quality mappings if not already set
+        for phrase, (cond, qual) in condition_quality_mappings.items():
+            if phrase in query_lower:
+                if extracted.get('condition') is None:
+                    extracted['condition'] = cond
+                if extracted.get('quality') is None:
+                    extracted['quality'] = qual
+                break
+        
+        # Extract numbers using regex patterns if not already extracted
+        import re
+        
+        # Bedrooms patterns: "2 bed", "3 bedroom", "4 bedrooms"
+        if extracted.get('bedrooms') is None:
+            bed_patterns = [
+                r'(\d+)\s*bed(?:room)?s?',
+                r'(\d+)\s*bed',
+                r'(\d+)\s*br'
+            ]
+            for pattern in bed_patterns:
+                match = re.search(pattern, query_lower)
+                if match:
+                    try:
+                        extracted['bedrooms'] = int(match.group(1))
+                        break
+                    except ValueError:
+                        pass
+        
+        # Bathrooms patterns: "1.5 bath", "2 bathroom", "3 baths"
+        if extracted.get('bathrooms') is None:
+            bath_patterns = [
+                r'(\d+(?:\.\d+)?)\s*bath(?:room)?s?',
+                r'(\d+(?:\.\d+)?)\s*bath'
+            ]
+            for pattern in bath_patterns:
+                match = re.search(pattern, query_lower)
+                if match:
+                    try:
+                        extracted['bathrooms'] = float(match.group(1))
+                        break
+                    except ValueError:
+                        pass
+        
+        # Square footage patterns: "900 sqft", "1000 square feet", "1200 sq ft"
+        if extracted.get('sqft_living') is None:
+            sqft_patterns = [
+                r'(\d+)\s*sq(?:uare)?\s*ft',
+                r'(\d+)\s*sqft',
+                r'(\d+)\s*square\s*feet',
+                r'around\s*(\d+)\s*sq',
+                r'about\s*(\d+)\s*sq'
+            ]
+            for pattern in sqft_patterns:
+                match = re.search(pattern, query_lower)
+                if match:
+                    try:
+                        extracted['sqft_living'] = int(match.group(1))
+                        break
+                    except ValueError:
+                        pass
+        
+        # Garage patterns: "2 car garage", "attached garage", "no garage"
+        if extracted.get('garage_cars') is None:
+            if 'no garage' in query_lower or 'no car garage' in query_lower:
+                extracted['garage_cars'] = 0
+            else:
+                garage_patterns = [
+                    r'(\d+)\s*car\s*garage',
+                    r'(\d+)\s*car',
+                    r'garage\s*for\s*(\d+)'
+                ]
+                for pattern in garage_patterns:
+                    match = re.search(pattern, query_lower)
+                    if match:
+                        try:
+                            extracted['garage_cars'] = int(match.group(1))
+                            break
+                        except ValueError:
+                            pass
+        
+        # Basement patterns: "finished basement", "unfinished basement", "no basement"
+        if extracted.get('basement') is None:
+            if 'no basement' in query_lower:
+                extracted['basement'] = 'None'
+            elif 'finished basement' in query_lower:
+                extracted['basement'] = 'Gd'
+            elif 'unfinished basement' in query_lower or 'basement' in query_lower:
+                extracted['basement'] = 'TA'
+        
+        # Heating patterns: "gas heat", "gas furnace", "electric heat"
+        if extracted.get('heating') is None:
+            if 'gas heat' in query_lower or 'gas furnace' in query_lower:
+                extracted['heating'] = 'GasA'
+            elif 'electric heat' in query_lower:
+                extracted['heating'] = 'Wall'
+        
+        # Central air patterns: "central air", "no central air", "AC", "no AC"
+        if extracted.get('central_air') is None:
+            if 'central air' in query_lower or 'ac' in query_lower:
+                extracted['central_air'] = 'Y'
+            elif 'no central air' in query_lower or 'no ac' in query_lower:
+                extracted['central_air'] = 'N'
+        
+        # Year built patterns: "built 2015", "built in 2000"
+        if extracted.get('year_built') is None:
+            year_patterns = [
+                r'built\s*(?:in\s*)?(\d{4})',
+                r'(\d{4})\s*(?:built|home|house)'
+            ]
+            for pattern in year_patterns:
+                match = re.search(pattern, query_lower)
+                if match:
+                    try:
+                        year = int(match.group(1))
+                        if 1800 <= year <= 2025:
+                            extracted['year_built'] = year
+                            break
+                    except ValueError:
+                        pass
+        
+        return extracted
+
+    def _regex_fallback_extraction(self, response: str) -> Dict[str, Any]:
+        """
+        Last resort fallback: extract features using regex patterns directly from LLM response.
+        This is used when JSON parsing completely fails.
+        """
+        logger.warning("Using regex fallback extraction")
+        extracted = {}
+        response_lower = response.lower()
+        
+        # Extract bedrooms
+        bed_match = re.search(r'(\d+)\s*bed', response_lower)
+        if bed_match:
+            extracted['bedrooms'] = int(bed_match.group(1))
+        
+        # Extract bathrooms
+        bath_match = re.search(r'(\d+(?:\.\d+)?)\s*bath', response_lower)
+        if bath_match:
+            extracted['bathrooms'] = float(bath_match.group(1))
+        
+        # Extract square footage
+        sqft_match = re.search(r'(\d+)\s*sq', response_lower)
+        if sqft_match:
+            extracted['sqft_living'] = int(sqft_match.group(1))
+        
+        # Extract garage
+        if 'no garage' in response_lower:
+            extracted['garage_cars'] = 0
+        else:
+            garage_match = re.search(r'(\d+)\s*car', response_lower)
+            if garage_match:
+                extracted['garage_cars'] = int(garage_match.group(1))
+        
+        # Extract year built
+        year_match = re.search(r'(\d{4})', response_lower)
+        if year_match:
+            year = int(year_match.group(1))
+            if 1800 <= year <= 2025:
+                extracted['year_built'] = year
+        
+        # Extract neighborhood (look for capitalized words that might be neighborhood names)
+        neighborhood_match = re.search(r'"([A-Z][a-z]+)"', response)
+        if neighborhood_match:
+            extracted['neighborhood'] = neighborhood_match.group(1)
+        
+        # Extract condition/quality indicators
+        if 'needs work' in response_lower or 'fixer' in response_lower:
+            extracted['condition'] = 3
+            extracted['quality'] = 3
+        elif 'luxury' in response_lower or 'high-end' in response_lower:
+            extracted['quality'] = 9
+        
+        # Extract basement
+        if 'no basement' in response_lower:
+            extracted['basement'] = 'None'
+        elif 'finished basement' in response_lower:
+            extracted['basement'] = 'Gd'
+        
+        # Extract heating
+        if 'gas' in response_lower:
+            extracted['heating'] = 'GasA'
+        
+        # Extract central air
+        if 'central air' in response_lower or 'ac' in response_lower:
+            extracted['central_air'] = 'Y'
+        elif 'no central air' in response_lower:
+            extracted['central_air'] = 'N'
+        
+        logger.info(f"Regex fallback extracted: {extracted}")
+        return extracted
+
     def _extract_json_text(self, response: str) -> str:
         if not response:
             return ''
@@ -205,7 +432,8 @@ class Stage1Extractor:
                 return parsed
 
         logger.error("Unable to parse JSON response from LLM")
-        return {}
+        # Fallback: try to extract features using regex patterns
+        return self._regex_fallback_extraction(response)
     
     @classmethod
     def extract_with_version(cls, query: str, version: str) -> Stage1Output:
