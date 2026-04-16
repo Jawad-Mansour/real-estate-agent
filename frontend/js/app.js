@@ -233,7 +233,7 @@ function startMissingQuestions(missingFields, resetCollected = true, showIntroMe
     askNextQuestion();
 }
 
-function askNextQuestion() {
+async function askNextQuestion() {
     if (currentState.currentQuestionIndex >= currentState.missingFields.length) {
         calculatePrediction();
         return;
@@ -252,6 +252,10 @@ function askNextQuestion() {
     const progressIndicator = total > 1 ? ` (${currentNum}/${total})` : '';
     
     currentState.currentField = field;
+    
+    // Add thinking delay before asking next question
+    await addThinkingDelay(600);
+    
     addMessage(`${config.icon} ${config.question}${progressIndicator}`);
     currentState.waitingForAnswer = true;
 }
@@ -339,6 +343,7 @@ async function calculatePrediction() {
         setLoading(false);
         
         if (data.status === 'complete') {
+            await addThinkingDelay(1200);
             displayPriceResult(data.predicted_price, data.explanation, data.key_factors, data.comparison);
             currentState.step = 'result';
             currentState.waitingForAnswer = false;
@@ -361,9 +366,11 @@ async function calculatePrediction() {
             currentState.waitingForAnswer = false;
             currentState.currentField = null;
 
+            await addThinkingDelay(800);
             addMessage(`I still need ${missing.length} more detail(s): ${missing.join(', ')}. Let's continue:`);
             startMissingQuestions(missing, false, false); // Don't show intro message again
         } else {
+            await addThinkingDelay(500);
             addMessage(`❌ Sorry, I couldn't calculate the price. ${data.message || 'Please try again.'}`); 
         }
     } catch (error) { 
@@ -466,8 +473,11 @@ async function handleSendMessage() {
                 collectedValues: {} 
             };
             
+            await addThinkingDelay(1000);
+            
             if (Object.keys(filteredExtracted).length > 0) {
                 addExtractedMessage(filteredExtracted);
+                await addThinkingDelay(800);
             }
             
             if (missing.length > 0) {
@@ -479,9 +489,11 @@ async function handleSendMessage() {
                 calculatePrediction();
             }
         } else if (data.status === 'complete') { 
+            await addThinkingDelay(1500);
             displayPriceResult(data.predicted_price, data.explanation, data.key_factors, data.comparison); 
             currentState.step = 'result'; 
         } else { 
+            await addThinkingDelay(500);
             addMessage(`Sorry, I encountered an issue: ${data.message || 'Please try again.'}`); 
         }
     } catch (error) { 
@@ -525,14 +537,25 @@ function resetChat() {
     }
 }
 
+// Add thinking delay before AI messages
+function addThinkingDelay(ms = 1500) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     navigateTo('chat');
     document.getElementById('sendBtn')?.addEventListener('click', handleSendMessage);
     document.getElementById('newChatBtn')?.addEventListener('click', resetChat);
     document.getElementById('queryInput')?.addEventListener('keydown', (e) => { 
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-            e.preventDefault();
-            handleSendMessage(); 
+        if (e.key === 'Enter') {
+            if (e.shiftKey) {
+                // Shift+Enter: create new line (default behavior)
+                return;
+            } else {
+                // Enter alone: send message
+                e.preventDefault();
+                handleSendMessage(); 
+            }
         }
     });
     document.getElementById('queryInput')?.addEventListener('input', function() { 
