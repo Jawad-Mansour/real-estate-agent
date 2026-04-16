@@ -1,8 +1,10 @@
 /**
  * HouseWise - Intelligent Property Valuation
+ * Works with both local development and Docker deployment
  */
 
-const API_BASE_URL = 'http://localhost:8000';
+// Auto-detect API URL (works locally and in Docker)
+const API_BASE_URL = window.location.origin;
 
 let currentState = {
     extractedFeatures: {},
@@ -46,17 +48,21 @@ function parseGarageAnswer(text) {
 }
 
 function navigateTo(page) {
-    document.getElementById('pageChat').classList.add('hidden');
-    document.getElementById('pageInfo').classList.add('hidden');
-    document.getElementById('pageData').classList.add('hidden');
-    document.getElementById('pageAffects').classList.add('hidden');
-    document.getElementById(`page${page.charAt(0).toUpperCase() + page.slice(1)}`).classList.remove('hidden');
+    const pages = ['pageChat', 'pageInfo', 'pageData', 'pageAffects'];
+    pages.forEach(p => {
+        const el = document.getElementById(p);
+        if (el) el.classList.add('hidden');
+    });
+    
+    const targetPage = document.getElementById(`page${page.charAt(0).toUpperCase() + page.slice(1)}`);
+    if (targetPage) targetPage.classList.remove('hidden');
     
     const navBtns = document.querySelectorAll('.nav-btn');
     navBtns.forEach(btn => {
         btn.classList.remove('active', 'bg-primary', 'text-white', 'shadow-md');
         btn.classList.add('text-gray-600', 'hover:bg-gray-100');
     });
+    
     const activeBtn = document.getElementById(`nav${page.charAt(0).toUpperCase() + page.slice(1)}`);
     if (activeBtn) {
         activeBtn.classList.add('active', 'bg-primary', 'text-white', 'shadow-md');
@@ -233,7 +239,7 @@ function startMissingQuestions(missingFields, resetCollected = true, showIntroMe
     askNextQuestion();
 }
 
-async function askNextQuestion() {
+function askNextQuestion() {
     if (currentState.currentQuestionIndex >= currentState.missingFields.length) {
         calculatePrediction();
         return;
@@ -252,21 +258,11 @@ async function askNextQuestion() {
     const progressIndicator = total > 1 ? ` (${currentNum}/${total})` : '';
     
     currentState.currentField = field;
-    
-    // Add thinking delay before asking next question
-    await addThinkingDelay(600);
-    
     addMessage(`${config.icon} ${config.question}${progressIndicator}`);
     currentState.waitingForAnswer = true;
 }
 
 async function handleUserAnswer(answer) {
-    console.log('handleUserAnswer called', {
-        answer,
-        currentField: currentState.currentField,
-        missingFields: currentState.missingFields,
-        collectedValues: currentState.collectedValues
-    });
     if (!currentState.waitingForAnswer) return;
     addMessage(answer, true);
     
@@ -296,11 +292,6 @@ async function handleUserAnswer(answer) {
     }
     
     currentState.collectedValues[field] = value;
-    console.log('handleUserAnswer captured value', {
-        field,
-        value,
-        collectedValues: currentState.collectedValues
-    });
     currentState.currentQuestionIndex++;
     currentState.waitingForAnswer = false;
     askNextQuestion();
@@ -314,18 +305,10 @@ async function calculatePrediction() {
     );
 
     const overrideFeatures = { ...currentState.extractedFeatures, ...currentState.collectedValues };
-    console.log('calculatePrediction called', {
-        missingFields: currentState.missingFields,
-        collectedValues: currentState.collectedValues,
-        extractedFeatures: currentState.extractedFeatures,
-        missingCollected,
-        overrideFeatures
-    });
 
     if (missingCollected.length > 0) {
         addMessage(`Still missing: ${missingCollected.join(', ')}. Please provide these.`);
         currentState.currentQuestionIndex = currentState.missingFields.findIndex(f => missingCollected.includes(f));
-        console.warn('calculatePrediction detected missing collected values', missingCollected);
         askNextQuestion();
         return;
     }
@@ -343,14 +326,12 @@ async function calculatePrediction() {
         setLoading(false);
         
         if (data.status === 'complete') {
-            await addThinkingDelay(1200);
             displayPriceResult(data.predicted_price, data.explanation, data.key_factors, data.comparison);
             currentState.step = 'result';
             currentState.waitingForAnswer = false;
         } else if (data.status === 'incomplete') {
             const missing = data.missing_fields || [];
             const extracted = data.extracted_features || {};
-            console.warn('calculatePrediction received incomplete response', { missing, extracted });
 
             const filteredExtracted = {};
             for (const [key, value] of Object.entries(extracted)) {
@@ -366,11 +347,9 @@ async function calculatePrediction() {
             currentState.waitingForAnswer = false;
             currentState.currentField = null;
 
-            await addThinkingDelay(800);
             addMessage(`I still need ${missing.length} more detail(s): ${missing.join(', ')}. Let's continue:`);
-            startMissingQuestions(missing, false, false); // Don't show intro message again
+            startMissingQuestions(missing, false, false);
         } else {
-            await addThinkingDelay(500);
             addMessage(`❌ Sorry, I couldn't calculate the price. ${data.message || 'Please try again.'}`); 
         }
     } catch (error) { 
@@ -417,14 +396,6 @@ async function handleSendMessage() {
     const query = queryInput?.value.trim();
     if (!query) return;
 
-    console.log('handleSendMessage called', {
-        query,
-        waitingForAnswer: currentState.waitingForAnswer,
-        step: currentState.step,
-        missingFields: currentState.missingFields,
-        collectedValues: currentState.collectedValues
-    });
-
     if (currentState.waitingForAnswer) { 
         await handleUserAnswer(query); 
         queryInput.value = ''; 
@@ -445,15 +416,10 @@ async function handleSendMessage() {
         });
         const data = await response.json();
         setLoading(false);
-        console.log('handleSendMessage predict response', data);
         
         if (data.status === 'incomplete') {
             const extracted = data.extracted_features || {};
             const missing = data.missing_fields || [];
-            console.log('handleSendMessage incomplete response details', {
-                extracted,
-                missing
-            });
             
             const filteredExtracted = {};
             for (const [key, value] of Object.entries(extracted)) {
@@ -473,27 +439,22 @@ async function handleSendMessage() {
                 collectedValues: {} 
             };
             
-            await addThinkingDelay(1000);
-            
             if (Object.keys(filteredExtracted).length > 0) {
                 addExtractedMessage(filteredExtracted);
-                await addThinkingDelay(800);
             }
             
             if (missing.length > 0) {
                 const totalQuestions = missing.length;
                 const progressText = totalQuestions === 1 ? "one more detail" : `${totalQuestions} more details`;
                 addMessage(`I need ${progressText} to give you an accurate estimate. Let's go through them one by one:`);
-                startMissingQuestions(missing, true, false); // Don't show intro message again
+                startMissingQuestions(missing, true, false);
             } else {
                 calculatePrediction();
             }
         } else if (data.status === 'complete') { 
-            await addThinkingDelay(1500);
             displayPriceResult(data.predicted_price, data.explanation, data.key_factors, data.comparison); 
             currentState.step = 'result'; 
         } else { 
-            await addThinkingDelay(500);
             addMessage(`Sorry, I encountered an issue: ${data.message || 'Please try again.'}`); 
         }
     } catch (error) { 
@@ -544,23 +505,25 @@ function addThinkingDelay(ms = 1500) {
 
 document.addEventListener('DOMContentLoaded', () => {
     navigateTo('chat');
-    document.getElementById('sendBtn')?.addEventListener('click', handleSendMessage);
-    document.getElementById('newChatBtn')?.addEventListener('click', resetChat);
-    document.getElementById('queryInput')?.addEventListener('keydown', (e) => { 
-        if (e.key === 'Enter') {
-            if (e.shiftKey) {
-                // Shift+Enter: create new line (default behavior)
-                return;
-            } else {
-                // Enter alone: send message
+    
+    const sendBtn = document.getElementById('sendBtn');
+    const newChatBtn = document.getElementById('newChatBtn');
+    const queryInput = document.getElementById('queryInput');
+    
+    if (sendBtn) sendBtn.addEventListener('click', handleSendMessage);
+    if (newChatBtn) newChatBtn.addEventListener('click', resetChat);
+    
+    if (queryInput) {
+        queryInput.addEventListener('keydown', (e) => { 
+            if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 handleSendMessage(); 
             }
-        }
-    });
-    document.getElementById('queryInput')?.addEventListener('input', function() { 
-        this.style.height = 'auto'; 
-        const newHeight = Math.min(this.scrollHeight, 120);
-        this.style.height = newHeight + 'px'; 
-    });
+        });
+        queryInput.addEventListener('input', function() { 
+            this.style.height = 'auto'; 
+            const newHeight = Math.min(this.scrollHeight, 120);
+            this.style.height = newHeight + 'px'; 
+        });
+    }
 });

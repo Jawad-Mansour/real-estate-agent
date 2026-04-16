@@ -5,10 +5,13 @@ PDF #10: Model loads at startup, single POST route
 """
 
 import logging
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from backend.api.routes import predict, health, training_data
 from backend.core.ml.model_loader import ModelLoader
@@ -65,9 +68,26 @@ app.add_middleware(
 app.add_exception_handler(RequestValidationError, validation_error_handler)
 app.add_exception_handler(AppException, app_exception_handler)
 
+# Serve frontend static files
+frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
+if os.path.exists(frontend_path):
+    # Mount static assets (CSS, JS, images)
+    app.mount("/css", StaticFiles(directory=os.path.join(frontend_path, "css")), name="css")
+    app.mount("/js", StaticFiles(directory=os.path.join(frontend_path, "js")), name="js")
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
+    
+    # Serve index.html at root
+    @app.get("/", tags=["Frontend"])
+    async def serve_frontend():
+        return FileResponse(os.path.join(frontend_path, "index.html"))
+    
+    logger.info("Frontend static files mounted successfully")
+else:
+    logger.warning(f"Frontend path not found: {frontend_path}")
 
-@app.get("/", tags=["Root"])
-async def root():
+
+@app.get("/api", tags=["Root"])
+async def api_root():
     """Root endpoint - API information"""
     return {
         "service": "AI Real Estate Agent",
@@ -77,7 +97,8 @@ async def root():
             {"path": "/health", "method": "GET", "description": "Health check"},
             {"path": "/predict", "method": "POST", "description": "Predict house price"},
             {"path": "/api/training-data", "method": "GET", "description": "Training dataset summary"},
-            {"path": "/", "method": "GET", "description": "API information"}
+            {"path": "/api", "method": "GET", "description": "API information"},
+            {"path": "/", "method": "GET", "description": "Frontend UI"}
         ]
     }
 
