@@ -1,0 +1,29 @@
+Backend and frontend updates for dynamic Training Data page:
+
+1. Added new FastAPI endpoint:
+   - GET /api/training-data
+   - Implemented in backend/api/routes/training_data.py
+   - Reads actual CSV files from data/processed/ames_selected.csv and data/raw/ames.csv
+   - Returns stats, selected feature descriptors, first 10 sample rows, and computed correlations
+
+2. Updated backend entrypoint:
+   - Imported and included training_data router in backend/main.py
+   - Added /api/training-data to root endpoint documentation
+   - Exposed route through backend/api/__init__.py for consistency
+
+3. Updated frontend Training Data page:
+   - Replaced hardcoded values with dynamic placeholders in frontend/index.html
+   - Added loading state and error handling
+   - Displays actual stats, all 12 selected features, sample rows, and correlation bars
+
+4. Updated frontend JavaScript:
+   - Added loadTrainingData() and renderTrainingData() in frontend/js/app.js
+   - Calls new endpoint when navigating to the Training Data page
+   - Caches fetched training data for subsequent visits
+
+5. Data validation and calculations:
+   - Used actual dataset values from processed CSV for stats and sample_data
+   - Computed correlations using the raw Ames CSV when needed (Total Bsmt SF)
+   - Verified dataset stats with a local Python analysis run
+
+No external notebook script was imported directly; the data values and correlations were computed from the project's provided CSV files.

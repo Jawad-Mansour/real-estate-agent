@@ -49,7 +49,6 @@
                     <span class="font-medium">AI Chat</span>
                 </button>
                 
-                <!-- New Chat button directly under AI Chat -->
                 <button id="newChatBtn" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-white bg-success hover:bg-green-700 shadow-md mb-6">
                     <i class="fas fa-plus-circle text-lg"></i>
                     <span class="font-medium">New Chat</span>
@@ -97,7 +96,6 @@
                     </div>
                 </div>
 
-                <!-- Centered Icon (always visible, decreased brightness) -->
                 <div id="centeredIcon" class="flex-1 flex flex-col items-center justify-center">
                     <div class="relative">
                         <div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-secondary via-accent to-secondary blur-xl opacity-30 animate-pulse-slow"></div>
@@ -107,10 +105,8 @@
                     </div>
                 </div>
 
-                <!-- Scrollable Chat Messages (hidden initially, appears when messages added) -->
                 <div id="chatMessages" class="hidden flex-1 overflow-y-auto p-6 space-y-4"></div>
 
-                <!-- Loading Indicator -->
                 <div id="loadingIndicator" class="hidden py-2 text-center">
                     <div class="inline-flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-sm">
                         <div class="animate-spin rounded-full h-4 w-4 border-2 border-secondary border-t-transparent"></div>
@@ -118,7 +114,6 @@
                     </div>
                 </div>
 
-                <!-- Input Area -->
                 <div class="bg-white border-t border-gray-100 p-4">
                     <div class="flex gap-3 items-start">
                         <textarea id="queryInput" rows="1"
@@ -136,23 +131,70 @@
                 </div>
             </div>
 
-            <!-- PAGE 2: SYSTEM INFO -->
+            <!-- PAGE 2: SYSTEM INFO - Professional Design -->
             <div id="pageInfo" class="page-content hidden p-8">
-                <div class="max-w-4xl mx-auto">
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="bg-primary/10 rounded-xl p-3"><i class="fas fa-info-circle text-primary text-2xl"></i></div>
-                            <div><h2 class="text-2xl font-bold text-gray-800">About HouseWise</h2><p class="text-gray-500">Intelligent Property Valuation System</p></div>
+                <div class="max-w-7xl mx-auto">
+                    <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+                        <div class="bg-gradient-to-r from-primary to-secondary px-8 py-8 text-white">
+                            <p class="text-xs uppercase tracking-wider text-white/70">System overview</p>
+                            <h2 class="text-3xl font-bold mt-2">System Info</h2>
+                            <p class="text-white/80 text-sm mt-2 max-w-2xl">AI-powered property valuation assistant for home sellers, buyers, and agents.</p>
                         </div>
-                        <div class="space-y-6">
-                            <div><h3 class="text-lg font-semibold text-gray-800 mb-2">How It Works</h3><p class="text-gray-600 leading-relaxed">HouseWise uses a two-stage LLM prompt chain combined with a trained machine learning model. First, it extracts property features from your natural language description. Then, a Random Forest model (trained on 2,930 real Ames housing transactions) predicts the market value. Finally, an AI explains the price in plain English.</p></div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="bg-gray-50 rounded-xl p-4"><div class="flex items-center gap-2 mb-2"><i class="fas fa-brain text-secondary"></i><h4 class="font-semibold text-gray-800">Stage 1: Extraction</h4></div><p class="text-sm text-gray-600">LLM extracts 12 property features from your description. Never guesses - only uses what you mention.</p></div>
-                                <div class="bg-gray-50 rounded-xl p-4"><div class="flex items-center gap-2 mb-2"><i class="fas fa-chart-line text-success"></i><h4 class="font-semibold text-gray-800">Stage 2: Prediction</h4></div><p class="text-sm text-gray-600">Random Forest model predicts price based on extracted features and training data.</p></div>
-                                <div class="bg-gray-50 rounded-xl p-4"><div class="flex items-center gap-2 mb-2"><i class="fas fa-comment-dots text-warning"></i><h4 class="font-semibold text-gray-800">Stage 3: Explanation</h4></div><p class="text-sm text-gray-600">AI explains why the price is high or low, with key factors driving value.</p></div>
-                                <div class="bg-gray-50 rounded-xl p-4"><div class="flex items-center gap-2 mb-2"><i class="fas fa-check-circle text-success"></i><h4 class="font-semibold text-gray-800">Completeness Gate</h4></div><p class="text-sm text-gray-600">Never predicts with missing data - asks for missing details first.</p></div>
+                        
+                        <div class="p-8">
+                            <div class="grid gap-8 lg:grid-cols-2">
+                                <!-- Left Column -->
+                                <div class="space-y-6">
+                                    <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                                        <div class="flex items-center gap-3 mb-4">
+                                            <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center"><i class="fas fa-robot text-primary text-xl"></i></div>
+                                            <div><h3 class="text-lg font-semibold text-gray-900">What is HouseWise?</h3><p class="text-sm text-gray-500">Intelligent property valuation</p></div>
+                                        </div>
+                                        <p class="text-gray-600 leading-relaxed">HouseWise combines language understanding, machine learning, and intelligent explanation to provide instant, accurate property valuations from natural language descriptions.</p>
+                                    </div>
+
+                                    <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                                        <h3 class="text-lg font-semibold text-gray-900 mb-4">How it works</h3>
+                                        <div class="grid gap-4 md:grid-cols-3">
+                                            <div class="text-center p-4 bg-gray-50 rounded-xl"><div class="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center mx-auto mb-3"><i class="fas fa-magnifying-glass text-secondary text-xl"></i></div><h4 class="font-semibold">1. Extract</h4><p class="text-xs text-gray-500 mt-1">LLM extracts 12 features from your description</p></div>
+                                            <div class="text-center p-4 bg-gray-50 rounded-xl"><div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3"><i class="fas fa-chart-line text-primary text-xl"></i></div><h4 class="font-semibold">2. Predict</h4><p class="text-xs text-gray-500 mt-1">ML model predicts market value</p></div>
+                                            <div class="text-center p-4 bg-gray-50 rounded-xl"><div class="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center mx-auto mb-3"><i class="fas fa-lightbulb text-success text-xl"></i></div><h4 class="font-semibold">3. Explain</h4><p class="text-xs text-gray-500 mt-1">AI explains the price drivers</p></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right Column -->
+                                <div class="space-y-6">
+                                    <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Key features</h3>
+                                        <ul class="space-y-3">
+                                            <li class="flex gap-3 text-sm"><i class="fas fa-shield-alt text-secondary mt-0.5"></i> <span><strong>Completeness gate</strong> - never guesses missing details</span></li>
+                                            <li class="flex gap-3 text-sm"><i class="fas fa-comments text-primary mt-0.5"></i> <span><strong>Conversational interface</strong> - natural property descriptions</span></li>
+                                            <li class="flex gap-3 text-sm"><i class="fas fa-bolt text-success mt-0.5"></i> <span><strong>Instant valuation</strong> - real-time results</span></li>
+                                            <li class="flex gap-3 text-sm"><i class="fas fa-chart-simple text-warning mt-0.5"></i> <span><strong>Professional-grade</strong> - 85%+ accuracy</span></li>
+                                        </ul>
+                                    </div>
+
+                                    <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Model performance</h3>
+                                        <div class="space-y-3">
+                                            <div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="text-gray-600">Test R²</span><span class="font-semibold text-primary">0.8547</span></div>
+                                            <div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="text-gray-600">Test RMSE</span><span class="font-semibold text-primary">$32,361</span></div>
+                                            <div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="text-gray-600">Best model</span><span class="font-semibold text-primary">Random Forest</span></div>
+                                            <div class="flex justify-between items-center py-2"><span class="text-gray-600">Training set</span><span class="font-semibold text-primary">2,930 transactions</span></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="rounded-2xl bg-gradient-to-r from-primary/5 to-secondary/5 p-6">
+                                        <div class="flex items-center gap-4 justify-between flex-wrap">
+                                            <div class="text-center"><p class="text-2xl font-bold text-primary">2,930+</p><p class="text-xs text-gray-500">Transactions</p></div>
+                                            <div class="text-center"><p class="text-2xl font-bold text-primary">12</p><p class="text-xs text-gray-500">Features</p></div>
+                                            <div class="text-center"><p class="text-2xl font-bold text-primary">85%+</p><p class="text-xs text-gray-500">Accuracy</p></div>
+                                            <div class="text-center"><p class="text-2xl font-bold text-primary">FastAPI</p><p class="text-xs text-gray-500">Tech stack</p></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="bg-primary/5 rounded-xl p-4"><h4 class="font-semibold text-gray-800 mb-2">📊 Model Performance</h4><div class="grid grid-cols-2 gap-4 text-sm"><div><span class="text-gray-500">Test R²:</span> <span class="font-medium">0.8547</span></div><div><span class="text-gray-500">Test RMSE:</span> <span class="font-medium">$32,361</span></div><div><span class="text-gray-500">Best Model:</span> <span class="font-medium">Random Forest</span></div><div><span class="text-gray-500">Features:</span> <span class="font-medium">12</span></div></div></div>
                         </div>
                     </div>
                 </div>
@@ -160,42 +202,134 @@
 
             <!-- PAGE 3: TRAINING DATA -->
             <div id="pageData" class="page-content hidden p-8">
-                <div class="max-w-4xl mx-auto">
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-                        <div class="flex items-center gap-3 mb-6"><div class="bg-success/10 rounded-xl p-3"><i class="fas fa-database text-success text-2xl"></i></div><div><h2 class="text-2xl font-bold text-gray-800">Training Data</h2><p class="text-gray-500">Ames Housing Dataset</p></div></div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><div class="bg-gray-50 rounded-xl p-4 text-center"><div class="text-2xl font-bold text-primary">2,930</div><div class="text-xs text-gray-500">Properties</div></div><div class="bg-gray-50 rounded-xl p-4 text-center"><div class="text-2xl font-bold text-primary">82</div><div class="text-xs text-gray-500">Features per property</div></div><div class="bg-gray-50 rounded-xl p-4 text-center"><div class="text-2xl font-bold text-primary">2006-2010</div><div class="text-xs text-gray-500">Sales period</div></div></div>
-                        <h3 class="text-lg font-semibold text-gray-800 mb-3">Selected Features (12)</h3>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-6">
-                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">🛏️ Bedrooms</span>
-                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">🚿 Bathrooms</span>
-                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">📐 Living Area</span>
-                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">📏 Lot Area</span>
-                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">📅 Year Built</span>
-                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">🚗 Garage</span>
-                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">🔧 Condition</span>
-                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">⭐ Quality</span>
-                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">🏘️ Neighborhood</span>
-                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">🏠 Basement</span>
-                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">🔥 Heating</span>
-                            <span class="bg-gray-100 rounded-full px-3 py-1.5 text-sm">❄️ Central Air</span>
+                <div class="max-w-7xl mx-auto">
+                    <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+                        <div class="bg-gradient-to-r from-primary to-secondary px-8 py-8 text-white">
+                            <p class="text-xs uppercase tracking-wider text-white/70">Dataset overview</p>
+                            <h2 class="text-3xl font-bold mt-2">Training Data</h2>
+                            <p class="text-white/80 text-sm mt-2 max-w-2xl">Dynamic dataset summary pulled from the processed Ames CSV, including sample rows, selected features, and correlation insights.</p>
                         </div>
-                        <div class="bg-gray-50 rounded-xl p-4"><h4 class="font-semibold text-gray-800 mb-2">📈 Price Distribution (Training)</h4><div class="space-y-2 text-sm"><div class="flex justify-between"><span class="text-gray-500">Median Price:</span><span class="font-medium">$160,000</span></div><div class="flex justify-between"><span class="text-gray-500">Mean Price:</span><span class="font-medium">$178,641</span></div><div class="flex justify-between"><span class="text-gray-500">Price Range:</span><span class="font-medium">$12,789 - $755,000</span></div><div class="flex justify-between"><span class="text-gray-500">Typical Range (Q1-Q3):</span><span class="font-medium">$129,500 - $210,500</span></div></div></div>
+                        
+                        <div class="p-8">
+                            <div id="trainingDataLoading" class="mb-6 flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-600">
+                                <div class="h-3 w-3 rounded-full bg-primary animate-pulse"></div>
+                                Loading training data... Please wait.
+                            </div>
+                            <div id="trainingDataError" class="hidden mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700"></div>
+                            <div id="trainingDataContent" class="hidden space-y-8">
+                                <div class="grid gap-4 sm:grid-cols-3">
+                                    <div class="rounded-2xl border border-gray-100 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm"><p class="text-xs uppercase tracking-wider text-gray-500">Total rows</p><p id="statTotalRows" class="mt-2 text-3xl font-bold text-primary">—</p></div>
+                                    <div class="rounded-2xl border border-gray-100 bg-gradient-to-br from-green-50 to-white p-5 shadow-sm"><p class="text-xs uppercase tracking-wider text-gray-500">Median price</p><p id="statMedianPrice" class="mt-2 text-3xl font-bold text-primary">—</p></div>
+                                    <div class="rounded-2xl border border-gray-100 bg-gradient-to-br from-purple-50 to-white p-5 shadow-sm"><p class="text-xs uppercase tracking-wider text-gray-500">Mean price</p><p id="statMeanPrice" class="mt-2 text-3xl font-bold text-primary">—</p></div>
+                                </div>
+
+                                <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">📊 Selected features</h3>
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full text-sm">
+                                            <thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left">Feature</th><th class="px-4 py-3 text-left">Description</th><th class="px-4 py-3 text-left">Impact</th><th class="px-4 py-3 text-left">Why it matters</th></tr></thead>
+                                            <tbody id="selectedFeaturesBody" class="divide-y divide-gray-100"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">📋 Sample records</h3>
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full text-sm">
+                                            <thead id="sampleDataHeader" class="bg-gray-50"></thead>
+                                            <tbody id="sampleDataBody" class="divide-y divide-gray-100"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4">📈 Feature correlation with price</h3>
+                                    <div id="correlationBars" class="space-y-4"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- PAGE 4: WHAT AFFECTS PRICE -->
+            <!-- PAGE 4: WHAT AFFECTS PRICE - Professional Design -->
             <div id="pageAffects" class="page-content hidden p-8">
-                <div class="max-w-4xl mx-auto">
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-                        <div class="flex items-center gap-3 mb-6"><div class="bg-warning/10 rounded-xl p-3"><i class="fas fa-chart-line text-warning text-2xl"></i></div><div><h2 class="text-2xl font-bold text-gray-800">What Affects Price?</h2><p class="text-gray-500">Feature importance from our Random Forest model</p></div></div>
-                        <div class="space-y-4 mb-8">
-                            <div><div class="flex justify-between text-sm mb-1"><span class="font-medium">🏠 Overall Quality</span><span class="text-primary font-bold">63%</span></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r from-primary to-secondary h-2 rounded-full" style="width: 63%"></div></div><p class="text-xs text-gray-500 mt-1">The single most important factor. Quality 7+ adds 30%+ value.</p></div>
-                            <div><div class="flex justify-between text-sm mb-1"><span class="font-medium">📐 Living Area</span><span class="text-primary font-bold">15%</span></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r from-primary to-secondary h-2 rounded-full" style="width: 15%"></div></div><p class="text-xs text-gray-500 mt-1">Each 100 sq ft adds approximately $5,000-$10,000.</p></div>
-                            <div><div class="flex justify-between text-sm mb-1"><span class="font-medium">🚗 Garage</span><span class="text-primary font-bold">6%</span></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r from-primary to-secondary h-2 rounded-full" style="width: 6%"></div></div><p class="text-xs text-gray-500 mt-1">2-car garage adds $15,000-$25,000 compared to no garage.</p></div>
-                            <div><div class="flex justify-between text-sm mb-1"><span class="font-medium">🛏️ Bedrooms</span><span class="text-primary font-bold">4%</span></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r from-primary to-secondary h-2 rounded-full" style="width: 4%"></div></div><p class="text-xs text-gray-500 mt-1">Each additional bedroom adds ~$15,000-$25,000.</p></div>
+                <div class="max-w-7xl mx-auto">
+                    <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+                        <div class="bg-gradient-to-r from-primary to-secondary px-8 py-8 text-white">
+                            <p class="text-xs uppercase tracking-wider text-white/70">Price drivers</p>
+                            <h2 class="text-3xl font-bold mt-2">What Affects Price?</h2>
+                            <p class="text-white/80 text-sm mt-2 max-w-2xl">Data-driven insights from the Random Forest model and Ames housing analysis.</p>
                         </div>
-                        <div class="bg-primary/5 rounded-xl p-4"><h4 class="font-semibold text-gray-800 mb-2">💡 Key Insights</h4><ul class="space-y-2 text-sm text-gray-600"><li class="flex items-start gap-2"><i class="fas fa-check-circle text-success text-sm mt-0.5"></i> Quality > 7 puts you in the top 25% of homes</li><li class="flex items-start gap-2"><i class="fas fa-check-circle text-success text-sm mt-0.5"></i> Finished basement adds 10-15% to value</li><li class="flex items-start gap-2"><i class="fas fa-check-circle text-success text-sm mt-0.5"></i> StoneBr, NoRidge, NridgHt are premium neighborhoods</li><li class="flex items-start gap-2"><i class="fas fa-check-circle text-success text-sm mt-0.5"></i> Central air conditioning adds ~5% to value</li><li class="flex items-start gap-2"><i class="fas fa-check-circle text-success text-sm mt-0.5"></i> Newer homes (post-2000) command 20-30% premium</li></ul></div>
+                        
+                        <div class="p-8">
+                            <div class="grid gap-8 lg:grid-cols-2">
+                                <!-- Left Column -->
+                                <div class="space-y-6">
+                                    <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                                        <h3 class="text-lg font-semibold text-gray-900 mb-4">🎯 Feature importance</h3>
+                                        <div class="space-y-3">
+                                            <div><div class="flex justify-between text-sm mb-1"><span>Overall Quality</span><span class="font-semibold text-primary">62.6%</span></div><div class="h-2 bg-gray-200 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style="width:62.6%"></div></div></div>
+                                            <div><div class="flex justify-between text-sm mb-1"><span>Living Area</span><span class="font-semibold text-primary">15.0%</span></div><div class="h-2 bg-gray-200 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style="width:15%"></div></div></div>
+                                            <div><div class="flex justify-between text-sm mb-1"><span>Lot Area</span><span class="font-semibold text-primary">5.6%</span></div><div class="h-2 bg-gray-200 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style="width:5.6%"></div></div></div>
+                                            <div><div class="flex justify-between text-sm mb-1"><span>Bathrooms</span><span class="font-semibold text-primary">4.5%</span></div><div class="h-2 bg-gray-200 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style="width:4.5%"></div></div></div>
+                                            <div><div class="flex justify-between text-sm mb-1"><span>Year Built</span><span class="font-semibold text-primary">3.8%</span></div><div class="h-2 bg-gray-200 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style="width:3.8%"></div></div></div>
+                                            <div><div class="flex justify-between text-sm mb-1"><span>Garage Cars</span><span class="font-semibold text-primary">3.4%</span></div><div class="h-2 bg-gray-200 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style="width:3.4%"></div></div></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                                        <h3 class="text-lg font-semibold text-gray-900 mb-4">⭐ Price by quality</h3>
+                                        <div class="space-y-3">
+                                            <div><div class="flex justify-between text-sm"><span>Quality 5</span><span class="font-medium">$160k</span></div><div class="h-1.5 bg-gray-200 rounded-full mt-1"><div class="h-full bg-primary rounded-full" style="width:28%"></div></div></div>
+                                            <div><div class="flex justify-between text-sm"><span>Quality 6</span><span class="font-medium">$180k</span></div><div class="h-1.5 bg-gray-200 rounded-full mt-1"><div class="h-full bg-primary rounded-full" style="width:34%"></div></div></div>
+                                            <div><div class="flex justify-between text-sm"><span>Quality 7</span><span class="font-medium">$220k</span></div><div class="h-1.5 bg-gray-200 rounded-full mt-1"><div class="h-full bg-primary rounded-full" style="width:42%"></div></div></div>
+                                            <div><div class="flex justify-between text-sm"><span>Quality 8</span><span class="font-medium">$280k</span></div><div class="h-1.5 bg-gray-200 rounded-full mt-1"><div class="h-full bg-primary rounded-full" style="width:54%"></div></div></div>
+                                            <div><div class="flex justify-between text-sm"><span>Quality 9</span><span class="font-medium">$350k</span></div><div class="h-1.5 bg-gray-200 rounded-full mt-1"><div class="h-full bg-primary rounded-full" style="width:68%"></div></div></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                                        <h3 class="text-lg font-semibold text-gray-900 mb-4">📍 Neighborhood premium</h3>
+                                        <div class="grid gap-3 sm:grid-cols-3">
+                                            <div class="text-center p-3 bg-gradient-to-br from-green-50 to-white rounded-xl"><p class="font-semibold text-gray-900">StoneBr</p><p class="text-success font-bold text-lg">+35%</p><p class="text-xs text-gray-500">above median</p></div>
+                                            <div class="text-center p-3 bg-gradient-to-br from-green-50 to-white rounded-xl"><p class="font-semibold text-gray-900">NoRidge</p><p class="text-success font-bold text-lg">+40%</p><p class="text-xs text-gray-500">above median</p></div>
+                                            <div class="text-center p-3 bg-gradient-to-br from-green-50 to-white rounded-xl"><p class="font-semibold text-gray-900">NridgHt</p><p class="text-success font-bold text-lg">+20%</p><p class="text-xs text-gray-500">above median</p></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right Column -->
+                                <div class="space-y-6">
+                                    <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                                        <h3 class="text-lg font-semibold text-gray-900 mb-4">📐 Price by living area</h3>
+                                        <div class="space-y-4">
+                                            <div class="p-4 bg-gray-50 rounded-xl"><p class="font-semibold">1500–2000 sq ft</p><p class="text-sm text-gray-500 mt-1">Typical range with stable market value and strong demand</p></div>
+                                            <div class="p-4 bg-gray-50 rounded-xl"><p class="font-semibold">Above 3000 sq ft</p><p class="text-sm text-gray-500 mt-1">Premium homes command significantly higher value, especially when paired with quality and location</p></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="rounded-2xl border border-gray-100 bg-gradient-to-br from-primary/5 to-secondary/5 p-6">
+                                        <h3 class="text-lg font-semibold text-gray-900 mb-4">💡 Key insights</h3>
+                                        <div class="space-y-4">
+                                            <div class="flex items-start gap-3"><i class="fas fa-chart-line text-success mt-0.5"></i><div><p class="font-medium">Quality 7+</p><p class="text-sm text-gray-500">Adds ~30% value compared to mid-range homes</p></div></div>
+                                            <div class="flex items-start gap-3"><i class="fas fa-building text-primary mt-0.5"></i><div><p class="font-medium">Finished basement</p><p class="text-sm text-gray-500">Contributes 10–15% value uplift</p></div></div>
+                                            <div class="flex items-start gap-3"><i class="fas fa-car text-warning mt-0.5"></i><div><p class="font-medium">2-car garage</p><p class="text-sm text-gray-500">Adds roughly $20k in market value</p></div></div>
+                                            <div class="flex items-start gap-3"><i class="fas fa-wind text-secondary mt-0.5"></i><div><p class="font-medium">Central air</p><p class="text-sm text-gray-500">Improves buyer appeal and supports price premium</p></div></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                                        <h3 class="text-lg font-semibold text-gray-900 mb-3">🎯 Summary</h3>
+                                        <p class="text-sm text-gray-600">Quality, living area, lot size, and bathrooms carry the strongest pricing signal. Neighborhood and condition refine final value.</p>
+                                        <div class="mt-4 pt-3 border-t border-gray-100">
+                                            <p class="text-xs text-gray-400">Based on Random Forest feature importance analysis</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

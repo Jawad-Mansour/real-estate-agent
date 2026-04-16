@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 
-from backend.api.routes import predict, health
+from backend.api.routes import predict, health, training_data
 from backend.core.ml.model_loader import ModelLoader
 from backend.utils.exceptions import AppException, validation_error_handler, app_exception_handler
 
@@ -76,6 +76,7 @@ async def root():
         "endpoints": [
             {"path": "/health", "method": "GET", "description": "Health check"},
             {"path": "/predict", "method": "POST", "description": "Predict house price"},
+            {"path": "/api/training-data", "method": "GET", "description": "Training dataset summary"},
             {"path": "/", "method": "GET", "description": "API information"}
         ]
     }
@@ -84,6 +85,7 @@ async def root():
 # Include routers
 app.include_router(health.router)
 app.include_router(predict.router)
+app.include_router(training_data.router)
 
 
 if __name__ == "__main__":

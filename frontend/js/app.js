@@ -1,6 +1,5 @@
 /**
  * HouseWise - Intelligent Property Valuation
- * Fixed: Icon always visible, loading indicator added, New Chat positioned correctly
  */
 
 const API_BASE_URL = 'http://localhost:8000';
@@ -33,6 +32,19 @@ const FIELD_CONFIG = {
     neighborhood: { label: 'neighborhood', icon: '🏘️', question: 'Which neighborhood is the property in?', type: 'text', placeholder: 'e.g., NAmes, StoneBr' }
 };
 
+function extractNumberFromText(text) {
+    if (!text) return NaN;
+    const match = text.match(/\d+\.?\d*/);
+    if (match) return parseFloat(match[0]);
+    return NaN;
+}
+
+function parseGarageAnswer(text) {
+    const lower = text.toLowerCase().trim();
+    if (lower === 'no garage' || lower === 'none' || lower === '0') return 0;
+    return extractNumberFromText(text);
+}
+
 function navigateTo(page) {
     document.getElementById('pageChat').classList.add('hidden');
     document.getElementById('pageInfo').classList.add('hidden');
@@ -50,14 +62,16 @@ function navigateTo(page) {
         activeBtn.classList.add('active', 'bg-primary', 'text-white', 'shadow-md');
         activeBtn.classList.remove('text-gray-600', 'hover:bg-gray-100');
     }
+
+    if (page === 'data') {
+        loadTrainingData();
+    }
 }
 
-// Icon NEVER disappears - we just add messages without hiding icon
 function addMessage(content, isUser = false) {
     const chatMessages = document.getElementById('chatMessages');
     const centeredIcon = document.getElementById('centeredIcon');
     
-    // Show chat container and hide icon only when first message is added
     if (!hasMessages && chatMessages && centeredIcon) {
         hasMessages = true;
         centeredIcon.classList.add('hidden');
@@ -93,6 +107,94 @@ function setLoading(loading) {
     if (sendBtn) sendBtn.disabled = loading;
 }
 
+let trainingDataCache = null;
+
+async function loadTrainingData() {
+    const loadingBar = document.getElementById('trainingDataLoading');
+    const errorBox = document.getElementById('trainingDataError');
+    const contentSection = document.getElementById('trainingDataContent');
+
+    if (loadingBar) loadingBar.classList.remove('hidden');
+    if (errorBox) errorBox.classList.add('hidden');
+    if (contentSection) contentSection.classList.add('hidden');
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/training-data`);
+        if (!response.ok) throw new Error(`Server responded with status ${response.status}`);
+        const data = await response.json();
+        trainingDataCache = data;
+        renderTrainingData(data);
+        return data;
+    } catch (error) {
+        if (errorBox) {
+            errorBox.textContent = `Unable to load training data: ${error.message}`;
+            errorBox.classList.remove('hidden');
+        }
+        console.error('Training data error:', error);
+        return null;
+    } finally {
+        if (loadingBar) loadingBar.classList.add('hidden');
+    }
+}
+
+function renderTrainingData(data) {
+    if (!data) return;
+    
+    const formatCurrency = (value) => `$${Number(value).toLocaleString()}`;
+
+    const totalRowsEl = document.getElementById('statTotalRows');
+    const medianPriceEl = document.getElementById('statMedianPrice');
+    const meanPriceEl = document.getElementById('statMeanPrice');
+    
+    if (totalRowsEl) totalRowsEl.textContent = Number(data.stats.total_rows).toLocaleString();
+    if (medianPriceEl) medianPriceEl.textContent = formatCurrency(data.stats.median_price);
+    if (meanPriceEl) meanPriceEl.textContent = formatCurrency(data.stats.mean_price);
+
+    const featuresBody = document.getElementById('selectedFeaturesBody');
+    if (featuresBody) {
+        featuresBody.innerHTML = data.selected_features.map(f => `
+            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                <td class="px-4 py-3 font-medium text-gray-900">${f.name}</td>
+                <td class="px-4 py-3 text-gray-600">${f.description}</td>
+                <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-medium ${f.impact === 'High' ? 'bg-green-100 text-green-700' : f.impact === 'Medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}">${f.impact}</span></td>
+                <td class="px-4 py-3 text-gray-500 text-sm">${f.explanation || '—'}</td>
+            </tr>
+        `).join('');
+    }
+
+    const sampleHeader = document.getElementById('sampleDataHeader');
+    const sampleBody = document.getElementById('sampleDataBody');
+    const sampleColumns = ['Bedroom AbvGr', 'bathrooms', 'Gr Liv Area', 'Lot Area', 'Year Built', 'Garage Cars', 'Overall Qual', 'SalePrice'];
+    
+    if (sampleHeader) {
+        sampleHeader.innerHTML = `<tr>${sampleColumns.map(col => `<th class="px-4 py-3 text-left text-gray-600 font-medium">${col}</th>`).join('')}</tr>`;
+    }
+    
+    if (sampleBody) {
+        sampleBody.innerHTML = data.sample_data.map(row => `
+            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                ${sampleColumns.map(col => `<td class="px-4 py-3 text-gray-700">${row[col] ?? '—'}</td>`).join('')}
+            </tr>
+        `).join('');
+    }
+
+    const correlationBars = document.getElementById('correlationBars');
+    if (correlationBars) {
+        correlationBars.innerHTML = Object.entries(data.correlations).map(([feature, correlation]) => {
+            const width = Math.min(100, Math.max(0, Math.round(correlation * 100)));
+            return `
+                <div>
+                    <div class="flex justify-between text-sm mb-1"><span>${feature}</span><span class="font-semibold text-primary">${(correlation * 100).toFixed(1)}%</span></div>
+                    <div class="h-2 bg-gray-200 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style="width: ${width}%"></div></div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    const contentSection = document.getElementById('trainingDataContent');
+    if (contentSection) contentSection.classList.remove('hidden');
+}
+
 function addExtractedMessage(extracted) {
     const nonNullEntries = Object.entries(extracted).filter(([_, v]) => v !== null && v !== undefined && v !== 'None');
     
@@ -110,15 +212,17 @@ function addExtractedMessage(extracted) {
     addMessage(`I've extracted these details from your description:${featuresHtml}`);
 }
 
-function startMissingQuestions(missingFields) {
-    if (missingFields.length === 0) {
+function startMissingQuestions(missingFields, resetCollected = true) {
+    if (!missingFields || missingFields.length === 0) {
         calculatePrediction();
         return;
     }
     currentState.missingFields = missingFields;
     currentState.currentQuestionIndex = 0;
     currentState.waitingForAnswer = true;
-    currentState.collectedValues = {};
+    if (resetCollected) {
+        currentState.collectedValues = {};
+    }
     askNextQuestion();
 }
 
@@ -130,6 +234,7 @@ function askNextQuestion() {
     const field = currentState.missingFields[currentState.currentQuestionIndex];
     const config = FIELD_CONFIG[field];
     if (!config) {
+        console.warn(`Unknown missing field requested: ${field}. Skipping it.`);
         currentState.currentQuestionIndex++;
         askNextQuestion();
         return;
@@ -140,31 +245,78 @@ function askNextQuestion() {
 }
 
 async function handleUserAnswer(answer) {
+    console.log('handleUserAnswer called', {
+        answer,
+        currentField: currentState.currentField,
+        missingFields: currentState.missingFields,
+        collectedValues: currentState.collectedValues
+    });
     if (!currentState.waitingForAnswer) return;
     addMessage(answer, true);
+    
     const field = currentState.currentField;
     const config = FIELD_CONFIG[field];
     let value = answer.trim();
     
-    if (config && ['bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot', 'year_built', 'garage_cars', 'condition', 'quality'].includes(field)) {
-        value = parseFloat(value);
-        if (isNaN(value)) { 
-            addMessage(`Please enter a valid number for ${config.label}.`); 
-            return; 
+    if (config) {
+        if (field === 'garage_cars') {
+            value = parseGarageAnswer(value);
+            if (isNaN(value)) {
+                addMessage(`Please enter a valid number for garage capacity (0-5).`);
+                return;
+            }
+        } else if (['bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot', 'year_built', 'condition', 'quality'].includes(field)) {
+            let extractedNum = extractNumberFromText(value);
+            if (!isNaN(extractedNum)) {
+                value = extractedNum;
+            } else {
+                value = parseFloat(value);
+            }
+            if (isNaN(value)) {
+                addMessage(`Please enter a valid number for ${config.label}.`);
+                return;
+            }
         }
     }
     
     currentState.collectedValues[field] = value;
+    console.log('handleUserAnswer captured value', {
+        field,
+        value,
+        collectedValues: currentState.collectedValues
+    });
     currentState.currentQuestionIndex++;
     currentState.waitingForAnswer = false;
     askNextQuestion();
 }
 
 async function calculatePrediction() {
+    const missingCollected = currentState.missingFields.filter(field =>
+        currentState.collectedValues[field] === undefined ||
+        currentState.collectedValues[field] === null ||
+        currentState.collectedValues[field] === ''
+    );
+
+    const overrideFeatures = { ...currentState.extractedFeatures, ...currentState.collectedValues };
+    console.log('calculatePrediction called', {
+        missingFields: currentState.missingFields,
+        collectedValues: currentState.collectedValues,
+        extractedFeatures: currentState.extractedFeatures,
+        missingCollected,
+        overrideFeatures
+    });
+
+    if (missingCollected.length > 0) {
+        addMessage(`Still missing: ${missingCollected.join(', ')}. Please provide these.`);
+        currentState.currentQuestionIndex = currentState.missingFields.findIndex(f => missingCollected.includes(f));
+        console.warn('calculatePrediction detected missing collected values', missingCollected);
+        askNextQuestion();
+        return;
+    }
+
     addMessage("Great! Let me calculate the value for you...");
     setLoading(true);
     
-    const overrideFeatures = { ...currentState.extractedFeatures, ...currentState.collectedValues };
     try {
         const response = await fetch(`${API_BASE_URL}/predict`, { 
             method: 'POST', 
@@ -178,7 +330,28 @@ async function calculatePrediction() {
             displayPriceResult(data.predicted_price, data.explanation, data.key_factors, data.comparison);
             currentState.step = 'result';
             currentState.waitingForAnswer = false;
-        } else { 
+        } else if (data.status === 'incomplete') {
+            const missing = data.missing_fields || [];
+            const extracted = data.extracted_features || {};
+            console.warn('calculatePrediction received incomplete response', { missing, extracted });
+
+            const filteredExtracted = {};
+            for (const [key, value] of Object.entries(extracted)) {
+                if (value !== null && value !== undefined && value !== 'None') {
+                    filteredExtracted[key] = value;
+                }
+            }
+
+            currentState.extractedFeatures = { ...currentState.extractedFeatures, ...filteredExtracted };
+            currentState.missingFields = missing;
+            currentState.step = 'missing';
+            currentState.currentQuestionIndex = 0;
+            currentState.waitingForAnswer = false;
+            currentState.currentField = null;
+
+            addMessage(`Still missing ${missing.length} feature(s): ${missing.join(', ')}. Please provide them.`);
+            startMissingQuestions(missing, false);
+        } else {
             addMessage(`Sorry, I couldn't calculate the price. ${data.message || 'Please try again.'}`); 
         }
     } catch (error) { 
@@ -201,9 +374,9 @@ function displayPriceResult(price, explanation, keyFactors, comparison) {
     const comparisonColor = price > 160000 ? 'text-success' : 'text-warning';
     
     const resultMessage = `
-        <div class="price-result-card bg-white rounded-2xl shadow-lg border border-gray-100 p-5 max-w-md">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 max-w-md">
             <div class="text-center mb-4">
-                <div class="text-4xl font-bold price-amount">$${price.toLocaleString()}</div>
+                <div class="text-4xl font-bold text-primary">$${price.toLocaleString()}</div>
                 <div class="text-sm ${comparisonColor} mt-1 font-medium">${comparisonText}</div>
             </div>
             <div class="bg-gray-100 rounded-full h-1.5 mb-4 overflow-hidden">
@@ -224,7 +397,15 @@ async function handleSendMessage() {
     const queryInput = document.getElementById('queryInput');
     const query = queryInput?.value.trim();
     if (!query) return;
-    
+
+    console.log('handleSendMessage called', {
+        query,
+        waitingForAnswer: currentState.waitingForAnswer,
+        step: currentState.step,
+        missingFields: currentState.missingFields,
+        collectedValues: currentState.collectedValues
+    });
+
     if (currentState.waitingForAnswer) { 
         await handleUserAnswer(query); 
         queryInput.value = ''; 
@@ -245,10 +426,15 @@ async function handleSendMessage() {
         });
         const data = await response.json();
         setLoading(false);
+        console.log('handleSendMessage predict response', data);
         
         if (data.status === 'incomplete') {
             const extracted = data.extracted_features || {};
             const missing = data.missing_fields || [];
+            console.log('handleSendMessage incomplete response details', {
+                extracted,
+                missing
+            });
             
             const filteredExtracted = {};
             for (const [key, value] of Object.entries(extracted)) {
