@@ -28,10 +28,6 @@ PROMPT_ENGINEERING.md
 notebooks/
 *.ipynb
 
-# Data (exclude raw data, keep model)
-data/raw/*.csv
-data/processed/*.csv
-
 # OS
 .DS_Store
 Thumbs.db

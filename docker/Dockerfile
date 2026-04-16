@@ -2,19 +2,18 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install curl for healthcheck
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first (for better caching)
 COPY requirements.txt .
-
-# Install all dependencies from requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
 COPY backend/ ./backend/
 COPY frontend/ ./frontend/
 COPY backend/models/ ./backend/models/
+
+# Add data files for training-data endpoint
+COPY data/raw/ames.csv ./data/raw/ames.csv
+COPY data/processed/ames_selected.csv ./data/processed/ames_selected.csv
 
 EXPOSE 8000
 
