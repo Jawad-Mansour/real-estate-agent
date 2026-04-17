@@ -379,6 +379,9 @@ async function calculatePrediction() {
             headers: { 'Content-Type': 'application/json' }, 
             body: JSON.stringify({ query: currentState.originalQuery, override_features: overrideFeatures }) 
         });
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
         const data = await response.json();
         setLoading(false);
         
@@ -491,6 +494,9 @@ async function handleSendMessage() {
             headers: { 'Content-Type': 'application/json' }, 
             body: JSON.stringify({ query, override_features: null }) 
         });
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
         const data = await response.json();
         setLoading(false);
         
