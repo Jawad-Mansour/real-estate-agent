@@ -1,6 +1,8 @@
-def main():
-    print("Hello from real-estate-agent!")
+"""
+Root main.py for Railway deployment
+Imports the FastAPI app from backend.main
+"""
 
+from backend.main import app
 
-if __name__ == "__main__":
-    main()
+__all__ = ["app"]
