@@ -41,6 +41,26 @@ class ModelLoader:
             cls._instance._load_artifacts()
         return cls._instance
     
+    def _find_model_dir(self) -> str:
+        """Find model directory - checks multiple possible locations"""
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        
+        # Possible model locations
+        possible_paths = [
+            os.path.join(base_dir, 'models'),           # backend/models/
+            os.path.join(os.path.dirname(base_dir), 'notebooks', 'exports'),  # ../notebooks/exports/
+            os.path.join(base_dir, '..', 'notebooks', 'exports'),  # alternate path
+        ]
+        
+        for path in possible_paths:
+            if os.path.exists(os.path.join(path, 'model.joblib')):
+                logger.info(f"Found model files at: {path}")
+                return path
+        
+        # Return default path even if doesn't exist (will use mock)
+        logger.warning(f"No model files found in any location. Using default: {possible_paths[0]}")
+        return possible_paths[0]
+    
     def _create_mock_model(self):
         """Create a mock model for development when real model files are missing"""
         try:
@@ -70,17 +90,15 @@ class ModelLoader:
             raise
     
     def _load_artifacts(self):
-        """Load model and preprocessor from disk with fallback for development"""
-        # Get the absolute path to backend/models/
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        models_dir = os.path.join(base_dir, 'models')
+        """Load model and preprocessor from disk with fallback"""
+        models_dir = self._find_model_dir()
         
         model_path = os.path.join(models_dir, 'model.joblib')
         preprocessor_path = os.path.join(models_dir, 'preprocessor.joblib')
         
-        # Check if files exist - if not, use mock model for development
+        # Check if files exist - if not, use mock model
         if not os.path.exists(model_path) or not os.path.exists(preprocessor_path):
-            logger.warning(f"Model files not found at {models_dir}. Using mock model for development.")
+            logger.warning(f"Model files not found. Using mock model for development.")
             self._create_mock_model()
             return
         
