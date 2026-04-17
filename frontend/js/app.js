@@ -21,6 +21,21 @@ function closeDrawer() {
     if (overlay) overlay.classList.remove('open');
 }
 
+// ========== FIX 1: Complete State Reset Function ==========
+function resetState() {
+    currentState = {
+        extractedFeatures: {},
+        missingFields: [],
+        originalQuery: '',
+        step: 'input',
+        currentQuestionIndex: 0,
+        waitingForAnswer: false,
+        currentField: null,
+        collectedValues: {}
+    };
+    hasMessages = false;
+}
+
 let currentState = {
     extractedFeatures: {},
     missingFields: [],
@@ -33,6 +48,7 @@ let currentState = {
 };
 
 let hasMessages = false;
+let conversationCount = 0;  // FIX 2: Track conversations
 
 const FIELD_CONFIG = {
     bedrooms: { label: 'bedrooms', icon: '🛏️', question: 'How many bedrooms does the property have?', type: 'number', placeholder: 'e.g., 3' },
@@ -427,10 +443,35 @@ function displayPriceResult(price, explanation, keyFactors, comparison) {
     addMessage(resultMessage);
 }
 
+// ========== FIX 3: Complete handleSendMessage with state reset ==========
 async function handleSendMessage() {
     const queryInput = document.getElementById('queryInput');
     const query = queryInput?.value.trim();
     if (!query) return;
+
+    // FIX: If this is a new conversation (not answering questions), increment counter
+    if (!currentState.waitingForAnswer && currentState.step === 'input') {
+        conversationCount++;
+        console.log(`Conversation #${conversationCount} started`);
+        
+        // FIX: Auto-reset if this is not the first conversation
+        if (conversationCount > 1) {
+            console.log("Auto-resetting state for new conversation");
+            resetState();
+            // Clear chat messages visually
+            const chatMessages = document.getElementById('chatMessages');
+            if (chatMessages) {
+                while (chatMessages.children.length > 0) {
+                    chatMessages.removeChild(chatMessages.lastChild);
+                }
+            }
+            const centeredIcon = document.getElementById('centeredIcon');
+            if (centeredIcon) {
+                centeredIcon.classList.remove('hidden');
+                chatMessages.classList.add('hidden');
+            }
+        }
+    }
 
     if (currentState.waitingForAnswer) { 
         await handleUserAnswer(query); 
@@ -499,6 +540,7 @@ async function handleSendMessage() {
     }
 }
 
+// ========== FIX 4: Updated resetChat with resetState ==========
 function resetChat() {
     navigateTo('chat');
     
@@ -515,17 +557,9 @@ function resetChat() {
         centeredIcon.classList.remove('hidden');
     }
     
-    hasMessages = false;
-    currentState = { 
-        extractedFeatures: {}, 
-        missingFields: [], 
-        originalQuery: '', 
-        step: 'input', 
-        currentQuestionIndex: 0, 
-        waitingForAnswer: false, 
-        currentField: null, 
-        collectedValues: {} 
-    };
+    // Use the resetState function
+    resetState();
+    conversationCount = 0;  // Reset conversation counter
     
     const queryInput = document.getElementById('queryInput');
     if (queryInput) {
