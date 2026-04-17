@@ -154,11 +154,20 @@ function escapeHtml(text) {
 function setLoading(loading) {
     const loadingIndicator = document.getElementById('loadingIndicator');
     const sendBtn = document.getElementById('sendBtn');
+    const queryInput = document.getElementById('queryInput');
     if (loadingIndicator) {
         if (loading) loadingIndicator.classList.remove('hidden');
         else loadingIndicator.classList.add('hidden');
     }
     if (sendBtn) sendBtn.disabled = loading;
+    if (queryInput) {
+        queryInput.disabled = loading;
+        if (loading) {
+            queryInput.placeholder = "Analyzing your property description...";
+        } else {
+            queryInput.placeholder = "Describe your property (e.g., '3-bed house with garage in quiet neighborhood')...";
+        }
+    }
 }
 
 let trainingDataCache = null;
