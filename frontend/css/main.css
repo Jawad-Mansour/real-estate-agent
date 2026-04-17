@@ -1,4 +1,10 @@
-/* Custom styles for HouseWise */
+/* HouseWise - Complete Mobile Responsive Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
 /* Smooth scrolling */
 html {
@@ -50,7 +56,7 @@ html {
     animation: float 3s ease-in-out infinite;
 }
 
-/* Pulsing glow for home logo (decreased brightness) */
+/* Pulsing glow for home logo */
 @keyframes pulse {
     0%, 100% {
         opacity: 0.3;
@@ -141,4 +147,169 @@ textarea:focus, button:focus {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+/* Mobile Menu Button - Hidden on desktop */
+.mobile-menu-btn {
+    display: none;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 1001;
+    background: white;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    cursor: pointer;
+}
+
+/* Sidebar Overlay */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    display: none;
+}
+
+.sidebar-overlay.active {
+    display: block;
+}
+
+/* ========== MOBILE RESPONSIVE STYLES ========== */
+@media (max-width: 768px) {
+    /* Show mobile menu button */
+    .mobile-menu-btn {
+        display: flex !important;
+    }
+    
+    /* Sidebar hidden by default on mobile */
+    aside {
+        transform: translateX(-100%);
+        position: fixed !important;
+        z-index: 1000;
+        width: 280px !important;
+        height: 100vh !important;
+        transition: transform 0.3s ease;
+    }
+    
+    aside.sidebar-visible {
+        transform: translateX(0);
+    }
+    
+    /* Main content full width on mobile */
+    main {
+        width: 100% !important;
+        margin-left: 0 !important;
+    }
+    
+    /* Add padding top for mobile menu button */
+    .page-content {
+        padding-top: 70px !important;
+    }
+    
+    /* Chat messages responsive */
+    #chatMessages {
+        padding: 16px !important;
+    }
+    
+    .user-message div, .ai-message div {
+        max-width: 85% !important;
+    }
+    
+    /* Input area responsive */
+    #queryInput {
+        font-size: 16px !important;
+    }
+    
+    /* Cards stack on mobile */
+    .grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Tables scroll horizontally */
+    .overflow-x-auto {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Stats cards row wrap */
+    .grid.gap-4.sm\:grid-cols-3 {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+    
+    /* Page padding reduced */
+    .page-content {
+        padding: 16px !important;
+    }
+    
+    /* Headers smaller on mobile */
+    h2 {
+        font-size: 1.5rem !important;
+    }
+    
+    h3 {
+        font-size: 1.25rem !important;
+    }
+    
+    /* Buttons easier to tap */
+    button, .nav-btn {
+        min-height: 48px !important;
+    }
+    
+    /* Correlation bars responsive */
+    #correlationBars > div {
+        margin-bottom: 16px;
+    }
+    
+    /* Table cells padding reduced */
+    td, th {
+        padding: 8px 12px !important;
+    }
+    
+    /* Feature cards full width */
+    .rounded-2xl {
+        padding: 16px !important;
+    }
+}
+
+/* Tablet styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* Desktop styles */
+@media (min-width: 1025px) {
+    aside {
+        position: relative !important;
+        transform: translateX(0) !important;
+    }
+    
+    .mobile-menu-btn {
+        display: none !important;
+    }
+}
+
+/* Touch-friendly tap targets */
+@media (max-width: 768px) {
+    button, 
+    .nav-btn,
+    [onclick],
+    .cursor-pointer {
+        cursor: pointer;
+        min-height: 44px;
+    }
+    
+    input, textarea, select {
+        font-size: 16px;
+        padding: 12px;
+    }
 }

@@ -6,6 +6,35 @@
 // Auto-detect API URL (works locally and in Docker)
 const API_BASE_URL = window.location.origin;
 
+// Mobile menu functions
+let sidebarOpen = false;
+
+function toggleMobileMenu() {
+    const sidebar = document.querySelector('aside');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    if (!sidebarOpen) {
+        sidebar.classList.add('sidebar-visible');
+        sidebar.classList.remove('sidebar-hidden');
+        if (overlay) overlay.classList.add('active');
+        sidebarOpen = true;
+    } else {
+        sidebar.classList.remove('sidebar-visible');
+        sidebar.classList.add('sidebar-hidden');
+        if (overlay) overlay.classList.remove('active');
+        sidebarOpen = false;
+    }
+}
+
+function closeMobileMenu() {
+    const sidebar = document.querySelector('aside');
+    const overlay = document.getElementById('sidebarOverlay');
+    sidebar.classList.remove('sidebar-visible');
+    sidebar.classList.add('sidebar-hidden');
+    if (overlay) overlay.classList.remove('active');
+    sidebarOpen = false;
+}
+
 let currentState = {
     extractedFeatures: {},
     missingFields: [],
@@ -48,6 +77,11 @@ function parseGarageAnswer(text) {
 }
 
 function navigateTo(page) {
+    // Close mobile menu if open
+    if (sidebarOpen) {
+        closeMobileMenu();
+    }
+    
     const pages = ['pageChat', 'pageInfo', 'pageData', 'pageAffects'];
     pages.forEach(p => {
         const el = document.getElementById(p);
@@ -496,11 +530,6 @@ function resetChat() {
         queryInput.value = '';
         queryInput.style.height = '48px';
     }
-}
-
-// Add thinking delay before AI messages
-function addThinkingDelay(ms = 1500) {
-    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 document.addEventListener('DOMContentLoaded', () => {

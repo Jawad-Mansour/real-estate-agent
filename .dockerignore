@@ -23,11 +23,26 @@ README.md
 ARCHITECTURE.md
 DEPLOYMENT.md
 PROMPT_ENGINEERING.md
+TEST_CASES.md
+PHASE_7_FIXES_SUMMARY.txt
 
-# Notebooks
+# Notebooks (heavy, not needed in Docker)
 notebooks/
 *.ipynb
+exports/
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Docker files (don't copy themselves)
+Dockerfile
+Dockerfile.dev
+docker/
+
+# Frontend node modules (if any)
+node_modules/
+
+# BUT keep model files (they are small)
+!backend/models/*.joblib
+!backend/models/*.json
