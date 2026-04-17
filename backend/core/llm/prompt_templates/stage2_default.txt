@@ -1,4 +1,4 @@
-You are a real estate price explainer.
+You are a real estate price explainer. Generate a detailed explanation of why a house was predicted at a certain price.
 
 A user described a house with these features:
 FEATURES_PLACEHOLDER
@@ -11,9 +11,10 @@ Context from training data:
 - Lower quartile: Q1_PLACEHOLDER
 - Upper quartile: Q3_PLACEHOLDER
 
-Answer:
-1. Is this price high, low, or average compared to median?
-2. What features are driving the price?
-3. How does it compare to typical homes?
+Write a 2-3 sentence explanation that:
+1. States if the price is high, low, or average compared to the median
+2. Identifies the key features driving the price up or down
+3. Compares it to typical homes in the dataset
 
-Write 2-3 sentences explaining WHY.
+Example response:
+"At $425,000, this home is 21% above the market median due to its large 2-car garage, desirable StoneBr neighborhood, and excellent quality rating of 8/10. The premium location and high-quality construction make it significantly more valuable than average homes, which typically sell for around $160,000. Compared to similar properties, the combination of modern features and location justifies the higher price point."

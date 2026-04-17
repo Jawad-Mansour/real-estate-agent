@@ -44,15 +44,19 @@ class Stage2Interpreter:
         
         response = LLMClient.chat_completion(
             prompt=prompt,
-            temperature=0.5,
+            temperature=0.1,
             max_tokens=500
         )
         
         if not response:
             comparison = TrainingStats.get_comparison(predicted_price)
+            key_factors = self._extract_key_factors(features)
+            explanation = f"The predicted price is ${predicted_price:,.0f}, which is {comparison}."
+            if key_factors and key_factors != ["Standard home features"]:
+                explanation += f" Key factors include: {', '.join(key_factors[:2])}."
             return Stage2Output(
-                explanation=f"The predicted price is ${predicted_price:,.0f}, which is {comparison}.",
-                key_factors=["Based on the features provided"],
+                explanation=explanation,
+                key_factors=key_factors,
                 comparison=comparison
             )
         
