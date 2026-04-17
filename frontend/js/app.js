@@ -6,33 +6,19 @@
 // Auto-detect API URL (works locally and in Docker)
 const API_BASE_URL = window.location.origin;
 
-// Mobile menu functions
-let sidebarOpen = false;
-
-function toggleMobileMenu() {
-    const sidebar = document.querySelector('aside');
-    const overlay = document.getElementById('sidebarOverlay');
-    
-    if (!sidebarOpen) {
-        sidebar.classList.add('sidebar-visible');
-        sidebar.classList.remove('sidebar-hidden');
-        if (overlay) overlay.classList.add('active');
-        sidebarOpen = true;
-    } else {
-        sidebar.classList.remove('sidebar-visible');
-        sidebar.classList.add('sidebar-hidden');
-        if (overlay) overlay.classList.remove('active');
-        sidebarOpen = false;
-    }
+// Mobile drawer functions
+function openDrawer() {
+    const drawer = document.querySelector('.mobile-drawer');
+    const overlay = document.querySelector('.drawer-overlay');
+    if (drawer) drawer.classList.add('open');
+    if (overlay) overlay.classList.add('open');
 }
 
-function closeMobileMenu() {
-    const sidebar = document.querySelector('aside');
-    const overlay = document.getElementById('sidebarOverlay');
-    sidebar.classList.remove('sidebar-visible');
-    sidebar.classList.add('sidebar-hidden');
-    if (overlay) overlay.classList.remove('active');
-    sidebarOpen = false;
+function closeDrawer() {
+    const drawer = document.querySelector('.mobile-drawer');
+    const overlay = document.querySelector('.drawer-overlay');
+    if (drawer) drawer.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
 }
 
 let currentState = {
@@ -77,10 +63,8 @@ function parseGarageAnswer(text) {
 }
 
 function navigateTo(page) {
-    // Close mobile menu if open
-    if (sidebarOpen) {
-        closeMobileMenu();
-    }
+    // Close mobile drawer if open
+    closeDrawer();
     
     const pages = ['pageChat', 'pageInfo', 'pageData', 'pageAffects'];
     pages.forEach(p => {
@@ -91,6 +75,7 @@ function navigateTo(page) {
     const targetPage = document.getElementById(`page${page.charAt(0).toUpperCase() + page.slice(1)}`);
     if (targetPage) targetPage.classList.remove('hidden');
     
+    // Update desktop sidebar buttons
     const navBtns = document.querySelectorAll('.nav-btn');
     navBtns.forEach(btn => {
         btn.classList.remove('active', 'bg-primary', 'text-white', 'shadow-md');
@@ -101,6 +86,23 @@ function navigateTo(page) {
     if (activeBtn) {
         activeBtn.classList.add('active', 'bg-primary', 'text-white', 'shadow-md');
         activeBtn.classList.remove('text-gray-600', 'hover:bg-gray-100');
+    }
+    
+    // Update bottom nav active state
+    const bottomItems = document.querySelectorAll('.bottom-nav-item');
+    bottomItems.forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    const bottomNavMap = {
+        'chat': 0,
+        'info': 1,
+        'data': 3,
+        'affects': 4
+    };
+    const index = bottomNavMap[page];
+    if (index !== undefined && bottomItems[index]) {
+        bottomItems[index].classList.add('active');
     }
 
     if (page === 'data') {

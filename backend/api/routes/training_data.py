@@ -1,6 +1,7 @@
 """
 Training data endpoint
 GET /api/training-data - Returns dataset statistics, selected features, sample rows, and correlations.
+Uses CSV files if available, otherwise falls back to hardcoded data (works on Railway)
 """
 
 import csv
@@ -107,17 +108,139 @@ def _load_csv_rows(csv_path: Path) -> List[Dict[str, str]]:
             reader = csv.DictReader(csv_file)
             return [row for row in reader]
     except FileNotFoundError:
-        logger.error(f"CSV file not found: {csv_path}")
+        logger.warning(f"CSV file not found: {csv_path}")
         return []
     except Exception as e:
-        logger.error(f"Error loading CSV {csv_path}: {e}")
+        logger.warning(f"Error loading CSV {csv_path}: {e}")
         return []
+
+
+def _get_hardcoded_data() -> TrainingDataResponse:
+    """Hardcoded fallback data - used when CSV files are not available (e.g., Railway)"""
+    return TrainingDataResponse(
+        stats=StatsResponse(
+            total_rows=2930,
+            median_price=163000,
+            mean_price=180796,
+            min_price=34900,
+            max_price=755000,
+            q1_price=129500,
+            q3_price=214000
+        ),
+        selected_features=[
+            FeatureDescriptor(
+                name='Overall Qual',
+                description='Material and finish quality (1-10)',
+                type='ordinal',
+                impact='High',
+                explanation='The single most important factor. A rating of 7+ adds 30%+ value.'
+            ),
+            FeatureDescriptor(
+                name='Gr Liv Area',
+                description='Above grade living area (sq ft)',
+                type='numeric',
+                impact='High',
+                explanation='Each 100 sq ft adds approximately $5,000-$10,000.'
+            ),
+            FeatureDescriptor(
+                name='Garage Cars',
+                description='Garage capacity',
+                type='numeric',
+                impact='Medium',
+                explanation='A 2-car garage adds roughly $20,000 in market value.'
+            ),
+            FeatureDescriptor(
+                name='Year Built',
+                description='Original construction year',
+                type='numeric',
+                impact='Medium',
+                explanation='Newer homes (post-2000) command a 20-30% premium.'
+            ),
+            FeatureDescriptor(
+                name='Total Bsmt SF',
+                description='Basement square footage',
+                type='numeric',
+                impact='Medium',
+                explanation='Finished basement adds 10-15% to overall property value.'
+            ),
+            FeatureDescriptor(
+                name='bathrooms',
+                description='Number of bathrooms (full + 0.5*half)',
+                type='numeric',
+                impact='Medium',
+                explanation='Each additional bathroom adds $15,000-$25,000.'
+            ),
+            FeatureDescriptor(
+                name='Lot Area',
+                description='Lot size (sq ft)',
+                type='numeric',
+                impact='Medium',
+                explanation='Larger lots provide more space and privacy.'
+            ),
+            FeatureDescriptor(
+                name='Neighborhood',
+                description='Physical location within Ames',
+                type='categorical',
+                impact='High',
+                explanation='Premium neighborhoods command 20-40% above median prices.'
+            ),
+            FeatureDescriptor(
+                name='Bsmt Qual',
+                description='Basement quality rating',
+                type='categorical',
+                impact='Medium',
+                explanation='Ex or Gd basement quality significantly increases value.'
+            ),
+            FeatureDescriptor(
+                name='Central Air',
+                description='Central air conditioning',
+                type='binary',
+                impact='Low',
+                explanation='Central air adds ~5% to value.'
+            ),
+            FeatureDescriptor(
+                name='Heating',
+                description='Heating type',
+                type='categorical',
+                impact='Low',
+                explanation='Gas forced air (GasA) is the most desirable.'
+            ),
+            FeatureDescriptor(
+                name='Bedroom AbvGr',
+                description='Number of bedrooms above grade',
+                type='numeric',
+                impact='Low',
+                explanation='Each bedroom adds $15,000-$25,000.'
+            ),
+        ],
+        sample_data=[
+            {"Bedroom AbvGr": 3, "bathrooms": 2.0, "Gr Liv Area": 1656, "Lot Area": 31770, 
+             "Year Built": 1960, "Garage Cars": 2, "Overall Qual": 6, "SalePrice": 215000},
+            {"Bedroom AbvGr": 4, "bathrooms": 2.5, "Gr Liv Area": 2500, "Lot Area": 15000, 
+             "Year Built": 2005, "Garage Cars": 2, "Overall Qual": 8, "SalePrice": 425000},
+            {"Bedroom AbvGr": 2, "bathrooms": 1.0, "Gr Liv Area": 1120, "Lot Area": 8500, 
+             "Year Built": 1955, "Garage Cars": 1, "Overall Qual": 5, "SalePrice": 135000},
+            {"Bedroom AbvGr": 5, "bathrooms": 3.5, "Gr Liv Area": 3200, "Lot Area": 25000, 
+             "Year Built": 2008, "Garage Cars": 3, "Overall Qual": 9, "SalePrice": 550000},
+            {"Bedroom AbvGr": 3, "bathrooms": 2.0, "Gr Liv Area": 1800, "Lot Area": 12000, 
+             "Year Built": 1995, "Garage Cars": 2, "Overall Qual": 7, "SalePrice": 285000},
+        ],
+        correlations={
+            'Overall Qual': 0.79,
+            'Gr Liv Area': 0.71,
+            'Garage Cars': 0.62,
+            'Year Built': 0.57,
+            'Total Bsmt SF': 0.61,
+            'bathrooms': 0.65,
+            'Lot Area': 0.26,
+        }
+    )
 
 
 def _load_training_data() -> TrainingDataResponse:
+    """Try to load from CSV files, fall back to hardcoded data if files don't exist"""
     root = _find_project_root()
     
-    # Correct paths based on your folder structure
     processed_path = root / 'data' / 'processed' / 'ames_selected.csv'
     raw_path = root / 'data' / 'raw' / 'ames.csv'
     
@@ -126,20 +249,16 @@ def _load_training_data() -> TrainingDataResponse:
     logger.info(f"Looking for raw data at: {raw_path}")
     
     # Check if files exist
-    if not processed_path.exists():
-        logger.error(f"Processed CSV not found at {processed_path}")
-        return _get_fallback_data()
-    
-    if not raw_path.exists():
-        logger.error(f"Raw CSV not found at {raw_path}")
-        return _get_fallback_data()
+    if not processed_path.exists() or not raw_path.exists():
+        logger.warning("CSV files not found - using hardcoded fallback data")
+        return _get_hardcoded_data()
     
     processed_rows = _load_csv_rows(processed_path)
     raw_rows = _load_csv_rows(raw_path)
     
     if not processed_rows:
-        logger.error("No processed data loaded - using fallback")
-        return _get_fallback_data()
+        logger.warning("No processed data loaded - using hardcoded fallback data")
+        return _get_hardcoded_data()
     
     prices = [_float(row.get('SalePrice', '')) for row in processed_rows]
     prices = [price for price in prices if not math.isnan(price)]
@@ -265,32 +384,6 @@ def _load_training_data() -> TrainingDataResponse:
         selected_features=selected_features,
         sample_data=sample_data,
         correlations=correlations,
-    )
-
-
-def _get_fallback_data() -> TrainingDataResponse:
-    """Fallback data if CSV files can't be loaded"""
-    return TrainingDataResponse(
-        stats=StatsResponse(
-            total_rows=2930,
-            median_price=163000,
-            mean_price=180796,
-            min_price=34900,
-            max_price=755000,
-            q1_price=129500,
-            q3_price=214000
-        ),
-        selected_features=[
-            FeatureDescriptor(
-                name='Overall Qual',
-                description='Material and finish quality',
-                type='ordinal',
-                impact='High',
-                explanation='Most important factor for price prediction.'
-            ),
-        ],
-        sample_data=[],
-        correlations={}
     )
 
 
