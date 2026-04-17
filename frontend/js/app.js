@@ -21,7 +21,7 @@ function closeDrawer() {
     if (overlay) overlay.classList.remove('open');
 }
 
-// ========== FIX 1: Complete State Reset Function ==========
+// Complete state reset function
 function resetState() {
     currentState = {
         extractedFeatures: {},
@@ -48,7 +48,6 @@ let currentState = {
 };
 
 let hasMessages = false;
-let conversationCount = 0;  // FIX 2: Track conversations
 
 const FIELD_CONFIG = {
     bedrooms: { label: 'bedrooms', icon: '🛏️', question: 'How many bedrooms does the property have?', type: 'number', placeholder: 'e.g., 3' },
@@ -79,7 +78,6 @@ function parseGarageAnswer(text) {
 }
 
 function navigateTo(page) {
-    // Close mobile drawer if open
     closeDrawer();
     
     const pages = ['pageChat', 'pageInfo', 'pageData', 'pageAffects'];
@@ -91,7 +89,6 @@ function navigateTo(page) {
     const targetPage = document.getElementById(`page${page.charAt(0).toUpperCase() + page.slice(1)}`);
     if (targetPage) targetPage.classList.remove('hidden');
     
-    // Update desktop sidebar buttons
     const navBtns = document.querySelectorAll('.nav-btn');
     navBtns.forEach(btn => {
         btn.classList.remove('active', 'bg-primary', 'text-white', 'shadow-md');
@@ -104,7 +101,6 @@ function navigateTo(page) {
         activeBtn.classList.remove('text-gray-600', 'hover:bg-gray-100');
     }
     
-    // Update bottom nav active state
     const bottomItems = document.querySelectorAll('.bottom-nav-item');
     bottomItems.forEach(item => {
         item.classList.remove('active');
@@ -443,41 +439,36 @@ function displayPriceResult(price, explanation, keyFactors, comparison) {
     addMessage(resultMessage);
 }
 
-// ========== FIX 3: Complete handleSendMessage with state reset ==========
 async function handleSendMessage() {
     const queryInput = document.getElementById('queryInput');
     const query = queryInput?.value.trim();
     if (!query) return;
 
-    // FIX: If this is a new conversation (not answering questions), increment counter
-    if (!currentState.waitingForAnswer && currentState.step === 'input') {
-        conversationCount++;
-        console.log(`Conversation #${conversationCount} started`);
-        
-        // FIX: Auto-reset if this is not the first conversation
-        if (conversationCount > 1) {
-            console.log("Auto-resetting state for new conversation");
-            resetState();
-            // Clear chat messages visually
-            const chatMessages = document.getElementById('chatMessages');
-            if (chatMessages) {
-                while (chatMessages.children.length > 0) {
-                    chatMessages.removeChild(chatMessages.lastChild);
-                }
-            }
-            const centeredIcon = document.getElementById('centeredIcon');
-            if (centeredIcon) {
-                centeredIcon.classList.remove('hidden');
-                chatMessages.classList.add('hidden');
-            }
-        }
-    }
-
+    // If waiting for answer, handle user response
     if (currentState.waitingForAnswer) { 
         await handleUserAnswer(query); 
         queryInput.value = ''; 
         queryInput.style.height = '48px'; 
         return; 
+    }
+    
+    // New conversation - reset state
+    if (currentState.step === 'input' || currentState.step === 'result') {
+        console.log("Starting new conversation");
+        resetState();
+        // Clear chat messages visually
+        const chatMessages = document.getElementById('chatMessages');
+        if (chatMessages) {
+            while (chatMessages.children.length > 0) {
+                chatMessages.removeChild(chatMessages.lastChild);
+            }
+        }
+        const centeredIcon = document.getElementById('centeredIcon');
+        if (centeredIcon) {
+            centeredIcon.classList.remove('hidden');
+            if (chatMessages) chatMessages.classList.add('hidden');
+        }
+        hasMessages = false;
     }
     
     addMessage(query, true);
@@ -494,7 +485,13 @@ async function handleSendMessage() {
         const data = await response.json();
         setLoading(false);
         
-        if (data.status === 'incomplete') {
+        if (data.status === 'complete') { 
+            // COMPLETE: Show price immediately
+            displayPriceResult(data.predicted_price, data.explanation, data.key_factors, data.comparison); 
+            currentState.step = 'result';
+            currentState.waitingForAnswer = false;
+        } else if (data.status === 'incomplete') {
+            // INCOMPLETE: Extract features and ask for missing
             const extracted = data.extracted_features || {};
             const missing = data.missing_fields || [];
             
@@ -516,21 +513,21 @@ async function handleSendMessage() {
                 collectedValues: {} 
             };
             
+            // Show what was extracted
             if (Object.keys(filteredExtracted).length > 0) {
                 addExtractedMessage(filteredExtracted);
             }
             
+            // Start asking for missing fields
             if (missing.length > 0) {
                 const totalQuestions = missing.length;
                 const progressText = totalQuestions === 1 ? "one more detail" : `${totalQuestions} more details`;
                 addMessage(`I need ${progressText} to give you an accurate estimate. Let's go through them one by one:`);
                 startMissingQuestions(missing, true, false);
             } else {
+                // Should not happen - if no missing, should be complete
                 calculatePrediction();
             }
-        } else if (data.status === 'complete') { 
-            displayPriceResult(data.predicted_price, data.explanation, data.key_factors, data.comparison); 
-            currentState.step = 'result'; 
         } else { 
             addMessage(`Sorry, I encountered an issue: ${data.message || 'Please try again.'}`); 
         }
@@ -540,8 +537,9 @@ async function handleSendMessage() {
     }
 }
 
-// ========== FIX 4: Updated resetChat with resetState ==========
 function resetChat() {
+    resetState();  // Reset state FIRST
+    
     navigateTo('chat');
     
     const chatMessages = document.getElementById('chatMessages');
@@ -557,10 +555,6 @@ function resetChat() {
         centeredIcon.classList.remove('hidden');
     }
     
-    // Use the resetState function
-    resetState();
-    conversationCount = 0;  // Reset conversation counter
-    
     const queryInput = document.getElementById('queryInput');
     if (queryInput) {
         queryInput.value = '';
@@ -569,6 +563,7 @@ function resetChat() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    resetState();  // ← ADD THIS - Initialize state on page load
     navigateTo('chat');
     
     const sendBtn = document.getElementById('sendBtn');
