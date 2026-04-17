@@ -10,72 +10,75 @@ Important extraction rules:
 - sqft_lot: integer (500-200000)
 - year_built: integer (1800-2025)
 - garage_cars: integer (0-5)
-- neighborhood: string
+- neighborhood: string (valid Ames neighborhoods: NAmes, StoneBr, NoRidge, NridgHt, OldTown, Sawyer, Gilbert, Edwards, Northpark, Blueste, MeadowV, CollgCr, Timber, Veenker, Crawford, Somerset, Mitchel, ClearCr, NWAmes, SWAyn, BrDale, BrkSide, IDOTRR, Landmrk, NPkVill, SawyerW, Veenker, Greens, Blmngtn, ClearCr, CollgCr, Crawfor, Edwards, Gilbert, Greens, IDOTRR, Landmrk, MeadowV, Mitchel, NAmes, NridgHt, NWAmes, NoRidge, NPkVill, OldTown, Sawyer, SawyerW, StoneBr, SWAyn, Timber, Veenker)
 - condition: integer (1-10)
 - quality: integer (1-10)
 - basement: string (Ex/Gd/TA/Fa/Po/None)
-- heating: string (GasA, GasW, Wall)
+- heating: string (GasA, GasW, Wall, Grav, OthW)
 - central_air: string (Y/N)
 
-Mapping and inference rules:
-- central_air must be exactly "Y" or "N" only.
-- basement must be exactly one of: "Ex", "Gd", "TA", "Fa", "Po", or "None".
-- quality and condition must be integers 1-10 only.
-- If the query says "needs work", "fixer upper", "needs repairs", set condition to 3 and quality to 3.
-- If the query says "good neighborhood", "nice area", "desirable location", set quality to 7.
-- If the query says "luxury", "high-end", "premium", "upscale", set quality to 9.
-- If the query says "excellent condition", "like new", "perfect", set condition to 9 and quality to 8.
-- If the query says "good condition", "well maintained", set condition to 7 and quality to 6.
-- If the query says "average", "typical", set condition to 5 and quality to 5.
-- If the query says "poor condition", "run down", set condition to 2 and quality to 2.
-- Extract numbers from phrases like "2 bed", "3 bedroom", "1.5 bath", "2 bathroom".
-- Extract square footage from "900 sqft", "1000 square feet", "1200 sq ft", "around 1500 sqft".
-- Extract garage from "2 car garage", "attached garage", "no garage" (set to 0).
-- Extract basement from "finished basement", "unfinished basement", "no basement" (set to "None").
-- Extract heating from "gas heat", "gas furnace", "electric heat".
-- Extract central air from "central air", "no central air", "AC" (set to "Y"), "no AC" (set to "N").
-- Do not guess values for missing features. Only infer when the text explicitly describes them.
+CRITICAL NUMBER EXTRACTION RULES:
+1. Look for numbers BEFORE these words: "bed", "bedroom", "bedrooms", "br"
+2. Look for numbers BEFORE these words: "bath", "bathroom", "bathrooms", "ba"
+3. Look for numbers BEFORE these words: "sqft", "sq ft", "square feet", "square foot"
+4. Look for numbers BEFORE these words: "car garage", "garage", "car"
+5. Look for 4-digit numbers (1800-2025) for year built
 
-EXAMPLE 1:
-Query: 3 bedroom house with 2 baths and a 2 car garage in NAmes
-Output: {"bedrooms": 3, "bathrooms": 2.0, "sqft_living": null, "sqft_lot": null, "year_built": null, "garage_cars": 2, "neighborhood": "NAmes", "condition": null, "quality": null, "basement": null, "heating": null, "central_air": null}
+INFERENCE RULES FOR QUALITY/CONDITION:
+- "needs work", "fixer upper", "needs repairs", "fixer" → condition=3, quality=3
+- "excellent condition", "like new", "perfect", "move-in ready" → condition=9, quality=8
+- "good condition", "well maintained", "nice" → condition=7, quality=6
+- "average", "typical", "decent" → condition=5, quality=5
+- "poor condition", "run down", "rough" → condition=2, quality=2
+- "luxury", "high-end", "premium", "upscale", "executive" → quality=9
+- "good neighborhood", "nice area", "desirable location", "great location" → quality=7
 
-EXAMPLE 2:
-Query: Luxury 4-bed, 3.5-bath colonial in StoneBr with 2500 sqft, built 2015
-Output: {"bedrooms": 4, "bathrooms": 3.5, "sqft_living": 2500, "sqft_lot": null, "year_built": 2015, "garage_cars": null, "neighborhood": "StoneBr", "condition": null, "quality": 9, "basement": null, "heating": null, "central_air": null}
+INFERENCE RULES FOR OTHER FEATURES:
+- "no garage" → garage_cars=0
+- "no basement" → basement="None"
+- "finished basement" → basement="Gd"
+- "unfinished basement" → basement="TA"
+- "gas heat", "gas furnace", "forced air" → heating="GasA"
+- "central air", "AC", "a/c", "air conditioning" → central_air="Y"
+- "no central air", "no AC", "window units" → central_air="N"
 
-EXAMPLE 3:
-Query: Fixer upper in OldTown, needs work, 2 bedrooms
-Output: {"bedrooms": 2, "bathrooms": null, "sqft_living": null, "sqft_lot": null, "year_built": null, "garage_cars": null, "neighborhood": "OldTown", "condition": 3, "quality": 3, "basement": null, "heating": null, "central_air": null}
+NEIGHBORHOOD MAPPING:
+- "North Ames", "north ames" → "NAmes"
+- "Stone Brook", "stonebrook" → "StoneBr"
+- "North Ridge", "northridge", "north ridge" → "NoRidge"
+- "Northridge Heights", "northridge heights" → "NridgHt"
+- "Old Town", "oldtown", "old town" → "OldTown"
 
-EXAMPLE 4:
-Query: 2 bedroom 1 bathroom small house with 900 sqft
-Output: {"bedrooms": 2, "bathrooms": 1.0, "sqft_living": 900, "sqft_lot": null, "year_built": null, "garage_cars": null, "neighborhood": null, "condition": null, "quality": null, "basement": null, "heating": null, "central_air": null}
+EXAMPLES:
 
-EXAMPLE 5:
-Query: cozy 2 bed 1 bath cottage around 1000 square feet
-Output: {"bedrooms": 2, "bathrooms": 1.0, "sqft_living": 1000, "sqft_lot": null, "year_built": null, "garage_cars": null, "neighborhood": null, "condition": null, "quality": null, "basement": null, "heating": null, "central_air": null}
+Example 1 - Basic numbers:
+Query: "3 bedroom house with 2 baths"
+Output: {"bedrooms":3,"bathrooms":2.0,"sqft_living":null,"sqft_lot":null,"year_built":null,"garage_cars":null,"neighborhood":null,"condition":null,"quality":null,"basement":null,"heating":null,"central_air":null}
 
-EXAMPLE 6:
-Query: 4 bed 3 bath colonial with 2 car garage
-Output: {"bedrooms": 4, "bathrooms": 3.0, "sqft_living": null, "sqft_lot": null, "year_built": null, "garage_cars": 2, "neighborhood": null, "condition": null, "quality": null, "basement": null, "heating": null, "central_air": null}
+Example 2 - Complete query:
+Query: "3 bedroom 2.5 bathroom 1850 sqft 15000 lot built 2005 2 car garage condition 7 quality 7 NAmes gas heat central air Y finished basement"
+Output: {"bedrooms":3,"bathrooms":2.5,"sqft_living":1850,"sqft_lot":15000,"year_built":2005,"garage_cars":2,"neighborhood":"NAmes","condition":7,"quality":7,"basement":"Gd","heating":"GasA","central_air":"Y"}
 
-EXAMPLE 7:
-Query: small house needs work
-Output: {"bedrooms": null, "bathrooms": null, "sqft_living": null, "sqft_lot": null, "year_built": null, "garage_cars": null, "neighborhood": null, "condition": 3, "quality": 3, "basement": null, "heating": null, "central_air": null}
+Example 3 - Natural language:
+Query: "I want a 4 bedroom house with a 2 car garage in a good neighborhood"
+Output: {"bedrooms":4,"bathrooms":null,"sqft_living":null,"sqft_lot":null,"year_built":null,"garage_cars":2,"neighborhood":null,"condition":null,"quality":7,"basement":null,"heating":null,"central_air":null}
 
-EXAMPLE 8:
-Query: luxury home with central air and gas heat in a great neighborhood
-Output: {"bedrooms": null, "bathrooms": null, "sqft_living": null, "sqft_lot": null, "year_built": null, "garage_cars": null, "neighborhood": null, "condition": null, "quality": 9, "basement": null, "heating": "GasA", "central_air": "Y"}
+Example 4 - Fixer upper:
+Query: "small fixer upper needs work 2 bedrooms"
+Output: {"bedrooms":2,"bathrooms":null,"sqft_living":null,"sqft_lot":null,"year_built":null,"garage_cars":null,"neighborhood":null,"condition":3,"quality":3,"basement":null,"heating":null,"central_air":null}
 
-EXAMPLE 9:
-Query: 3 bedroom ranch with no garage and no basement
-Output: {"bedrooms": 3, "bathrooms": null, "sqft_living": null, "sqft_lot": null, "year_built": null, "garage_cars": 0, "neighborhood": null, "condition": null, "quality": null, "basement": "None", "heating": null, "central_air": null}
+Example 5 - Luxury with features:
+Query: "luxury colonial with central air and gas heat"
+Output: {"bedrooms":null,"bathrooms":null,"sqft_living":null,"sqft_lot":null,"year_built":null,"garage_cars":null,"neighborhood":null,"condition":null,"quality":9,"basement":null,"heating":"GasA","central_air":"Y"}
 
-EXAMPLE 10:
-Query: excellent condition 4 bedroom home with 2800 square feet and finished basement
-Output: {"bedrooms": 4, "bathrooms": null, "sqft_living": 2800, "sqft_lot": null, "year_built": null, "garage_cars": null, "neighborhood": null, "condition": 9, "quality": 8, "basement": "Gd", "heating": null, "central_air": null}
+Example 6 - No garage no basement:
+Query: "3 bedroom ranch with no garage and no basement"
+Output: {"bedrooms":3,"bathrooms":null,"sqft_living":null,"sqft_lot":null,"year_built":null,"garage_cars":0,"neighborhood":null,"condition":null,"quality":null,"basement":"None","heating":null,"central_air":null}
+
+Example 7 - Conversational:
+Query: "Hey! I'm looking for a cozy family home. Something with 4 bedrooms would be great, maybe around 2200 square feet. I'd prefer a newer build, like after 2010. Also need a garage for 2 cars."
+Output: {"bedrooms":4,"bathrooms":null,"sqft_living":2200,"sqft_lot":null,"year_built":2010,"garage_cars":2,"neighborhood":null,"condition":null,"quality":null,"basement":null,"heating":null,"central_air":null}
 
 Now extract from this query: QUERY_PLACEHOLDER
 
-Return ONLY valid JSON. Use null for missing features.
+Return ONLY valid JSON. No other text. Use null for missing features.
