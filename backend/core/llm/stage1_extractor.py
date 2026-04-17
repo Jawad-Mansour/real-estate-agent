@@ -44,6 +44,19 @@ class Stage1Extractor:
         'old town': 'OldTown',
     }
     
+    # Words that are NOT neighborhoods (conversational stop words)
+    NEIGHBORHOOD_STOP_WORDS = {
+        'hey', 'hello', 'hi', 'i', 'want', 'a', 'the', 'in', 'with', 'for', 'my', 'looking',
+        'great', 'nice', 'good', 'beautiful', 'perfect', 'luxury', 'small', 'large', 'big',
+        'cozy', 'family', 'home', 'house', 'property', 'place', 'dream', 'new', 'old', 'and',
+        'of', 'to', 'is', 'that', 'this', 'it', 'me', 'you', 'we', 'they', 'he', 'she',
+        'not', 'so', 'but', 'or', 'on', 'at', 'by', 'without', 'about', 'into',
+        'through', 'during', 'before', 'after', 'above', 'below', 'between', 'under',
+        'what', 'where', 'when', 'why', 'how', 'then', 'than', 'there', 'here',
+        'very', 'just', 'but', 'do', 'does', 'did', 'doing', 'have', 'has', 'having',
+        'get', 'gets', 'getting', 'got', 'would', 'could', 'should', 'might', 'must'
+    }
+    
     def __init__(self, prompt_version: str = 'v4'):
         self.prompt_version = prompt_version
         self.prompt_template = self._load_prompt_template(prompt_version)
@@ -121,25 +134,36 @@ class Stage1Extractor:
                 elif normalized in {'none', 'no', 'no basement', 'none', ''}:
                     extracted['basement'] = 'None'
 
-        # Fix neighborhood names
+        # Fix neighborhood names - also filter out stop words
         if 'neighborhood' in extracted and extracted['neighborhood']:
             normalized = normalize_string(extracted['neighborhood'])
-            for key, value in self.NEIGHBORHOOD_MAPPING.items():
-                if key in normalized or normalized in key:
-                    extracted['neighborhood'] = value
-                    break
-            # Capitalize properly
-            if extracted['neighborhood']:
-                valid_neighborhoods = ['NAmes', 'StoneBr', 'NoRidge', 'NridgHt', 'OldTown', 
-                                       'Sawyer', 'Gilbert', 'Edwards', 'Northpark', 'Blueste',
-                                       'MeadowV', 'CollgCr', 'Timber', 'Veenker', 'Crawford',
-                                       'Somerset', 'Mitchel', 'ClearCr', 'NWAmes', 'SWAyn']
-                if extracted['neighborhood'] not in valid_neighborhoods:
-                    # Try to find closest match
-                    for valid in valid_neighborhoods:
-                        if valid.lower() in normalized or normalized in valid.lower():
-                            extracted['neighborhood'] = valid
-                            break
+            
+            # Skip if it's a stop word
+            if normalized in self.NEIGHBORHOOD_STOP_WORDS:
+                extracted['neighborhood'] = None
+            else:
+                for key, value in self.NEIGHBORHOOD_MAPPING.items():
+                    if key in normalized or normalized in key:
+                        extracted['neighborhood'] = value
+                        break
+                
+                # Capitalize properly if still set
+                if extracted['neighborhood']:
+                    valid_neighborhoods = ['NAmes', 'StoneBr', 'NoRidge', 'NridgHt', 'OldTown', 
+                                           'Sawyer', 'Gilbert', 'Edwards', 'Northpark', 'Blueste',
+                                           'MeadowV', 'CollgCr', 'Timber', 'Veenker', 'Crawford',
+                                           'Somerset', 'Mitchel', 'ClearCr', 'NWAmes', 'SWAyn']
+                    if extracted['neighborhood'] not in valid_neighborhoods:
+                        found = False
+                        for valid in valid_neighborhoods:
+                            if valid.lower() in normalized or normalized in valid.lower():
+                                extracted['neighborhood'] = valid
+                                found = True
+                                break
+                        if not found:
+                            # If it's a single capitalized word and not in valid list, likely not a neighborhood
+                            if len(extracted['neighborhood']) < 3 or extracted['neighborhood'][0].isupper():
+                                extracted['neighborhood'] = None
 
         quality_map = {
             'needs work': 3,
@@ -160,10 +184,8 @@ class Stage1Extractor:
                 value = extracted[key]
                 if isinstance(value, str):
                     normalized = normalize_string(value)
-                    # Check if it's a number string
                     if normalized.isdigit():
                         extracted[key] = int(normalized)
-                    # Check mapping
                     elif normalized in quality_map:
                         extracted[key] = quality_map[normalized]
                     elif 'good neighborhood' in normalized:
@@ -177,7 +199,6 @@ class Stage1Extractor:
                 elif isinstance(value, int):
                     extracted[key] = value
                 
-                # Clamp values
                 if extracted[key] is not None:
                     extracted[key] = max(1, min(10, extracted[key]))
 
@@ -229,7 +250,7 @@ class Stage1Extractor:
                     extracted['quality'] = qual
                 break
         
-        # Bedrooms (only if missing) - IMPROVED patterns
+        # Bedrooms (only if missing)
         if extracted.get('bedrooms') is None and original_values.get('bedrooms') is None:
             bed_patterns = [
                 r'(\d+)\s*bed(?:room)?s?',
@@ -249,7 +270,7 @@ class Stage1Extractor:
                     except ValueError:
                         pass
         
-        # Bathrooms (only if missing) - IMPROVED patterns
+        # Bathrooms (only if missing)
         if extracted.get('bathrooms') is None and original_values.get('bathrooms') is None:
             bath_patterns = [
                 r'(\d+(?:\.\d+)?)\s*bath(?:room)?s?',
@@ -268,7 +289,7 @@ class Stage1Extractor:
                     except ValueError:
                         pass
         
-        # Square footage (only if missing) - IMPROVED patterns
+        # Square footage (only if missing)
         if extracted.get('sqft_living') is None and original_values.get('sqft_living') is None:
             sqft_patterns = [
                 r'(\d+(?:,\d+)?)\s*sq(?:uare)?\s*ft',
@@ -308,7 +329,7 @@ class Stage1Extractor:
                     except ValueError:
                         pass
         
-        # Garage (only if missing) - IMPROVED
+        # Garage (only if missing)
         if extracted.get('garage_cars') is None and original_values.get('garage_cars') is None:
             if 'no garage' in query_lower or 'no car garage' in query_lower or 'without garage' in query_lower:
                 extracted['garage_cars'] = 0
@@ -339,7 +360,7 @@ class Stage1Extractor:
             elif 'unfinished basement' in query_lower or 'basement' in query_lower:
                 extracted['basement'] = 'TA'
         
-        # Heating (only if missing) - IMPROVED
+        # Heating (only if missing)
         if extracted.get('heating') is None and original_values.get('heating') is None:
             if 'gas heat' in query_lower or 'gas furnace' in query_lower or 'forced air' in query_lower:
                 extracted['heating'] = 'GasA'
@@ -348,10 +369,9 @@ class Stage1Extractor:
             elif 'heat pump' in query_lower:
                 extracted['heating'] = 'GasA'
         
-        # Central air (only if missing) - IMPROVED
+        # Central air (only if missing)
         if extracted.get('central_air') is None and original_values.get('central_air') is None:
             if 'central air' in query_lower or 'ac' in query_lower or 'a/c' in query_lower or 'air conditioning' in query_lower:
-                # Check for negation
                 if 'no central air' in query_lower or 'no ac' in query_lower or 'without ac' in query_lower:
                     extracted['central_air'] = 'N'
                 else:
@@ -359,7 +379,7 @@ class Stage1Extractor:
             elif 'no central air' in query_lower or 'no ac' in query_lower:
                 extracted['central_air'] = 'N'
         
-        # Year built (only if missing) - IMPROVED
+        # Year built (only if missing)
         if extracted.get('year_built') is None and original_values.get('year_built') is None:
             year_patterns = [
                 r'built\s*(?:in\s*)?(\d{4})',
@@ -378,21 +398,37 @@ class Stage1Extractor:
                     except ValueError:
                         pass
         
-        # Neighborhood (only if missing) - IMPROVED
+        # Neighborhood (only if missing) - IMPROVED with stop words filter
         if extracted.get('neighborhood') is None and original_values.get('neighborhood') is None:
-            # Check for neighborhood names in query
+            # First check for known neighborhood mappings
             for key, value in self.NEIGHBORHOOD_MAPPING.items():
                 if key in query_lower:
                     extracted['neighborhood'] = value
                     break
             
-            # Also check for capitalized words that might be neighborhoods
+            # If not found, look for capitalized words that might be neighborhoods
             if not extracted.get('neighborhood'):
-                neighborhood_match = re.search(r'\b([A-Z][a-z]+(?:[A-Z][a-z]+)?)\b', query)
-                if neighborhood_match:
-                    candidate = neighborhood_match.group(1)
-                    if len(candidate) > 2:
-                        extracted['neighborhood'] = candidate
+                potential_neighborhoods = re.findall(r'\b([A-Z][a-z]+(?:[A-Z][a-z]+)?)\b', query)
+                for candidate in potential_neighborhoods:
+                    candidate_lower = candidate.lower()
+                    # Skip if it's a stop word or too short
+                    if candidate_lower in self.NEIGHBORHOOD_STOP_WORDS or len(candidate) < 3:
+                        continue
+                    
+                    # Check if it matches any known neighborhood
+                    found = False
+                    for known in self.NEIGHBORHOOD_MAPPING.values():
+                        if candidate_lower in known.lower() or known.lower() in candidate_lower:
+                            extracted['neighborhood'] = known
+                            found = True
+                            break
+                    
+                    # Only set if it looks like a proper noun
+                    if not found and candidate[0].isupper():
+                        # Don't set common words as neighborhoods
+                        if candidate_lower not in self.NEIGHBORHOOD_STOP_WORDS:
+                            extracted['neighborhood'] = candidate
+                    break
         
         # Restore any original values that might have been accidentally changed
         for key, original_value in original_values.items():
@@ -407,7 +443,6 @@ class Stage1Extractor:
         extracted = {}
         response_lower = response.lower()
         
-        # Extract numbers
         bed_match = re.search(r'(\d+)\s*bed', response_lower)
         if bed_match:
             extracted['bedrooms'] = int(bed_match.group(1))
